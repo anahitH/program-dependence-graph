@@ -26,6 +26,7 @@ add_library(pdg MODULE
         lib/PDG/SVFGIndirectCallSiteResults.cpp
         lib/Debug/PDGPrinter.cpp
         lib/Debug/SVFGTraversal.cpp
+        lib/Debug/DGReachingDefinitions.cpp
 )
 
 target_include_directories(pdg PUBLIC
