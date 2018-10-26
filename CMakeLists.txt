@@ -24,6 +24,7 @@ add_library(pdg MODULE
         lib/PDG/SVFGDefUseAnalysisResults.cpp
         lib/PDG/IndirectCallSitesAnalysis.cpp
         lib/PDG/SVFGIndirectCallSiteResults.cpp
+        lib/PDG/DGDefUseAnalysisResults.cpp
         lib/Debug/PDGPrinter.cpp
         lib/Debug/SVFGTraversal.cpp
         lib/Debug/DGReachingDefinitions.cpp

@@ -31,7 +31,6 @@ private:
 
 private:
     SVFG* m_svfg;
-    std::unordered_map<unsigned, PDGNodeTy> m_phiNodes;
     std::unordered_map<llvm::Value*, DefSite> m_valueDefSite;
 }; // class SVFGDefUseAnalysisResults
 
