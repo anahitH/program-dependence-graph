@@ -23,6 +23,7 @@ public:
         ConstantExprNode,
         ConstantNode,
         BasicBlockNode,
+        FunctionNode,
         NullNode,
         PhiNode,
         UnknownNode
@@ -214,6 +215,41 @@ public:
         return llvm::isa<PDGLLVMNode>(node) && classof(llvm::cast<PDGLLVMNode>(node));
     }
 }; // class PDGConstantNode
+
+class PDGLLVMFunctionNode : public PDGLLVMNode
+{
+public:
+    explicit PDGLLVMFunctionNode(llvm::Function* function)
+        : PDGLLVMNode(llvm::dyn_cast<llvm::Value>(function), NodeType::FunctionNode)
+        , m_function(function)
+    {
+    }
+
+public:
+    virtual std::string getNodeAsString() const override
+    {
+        return m_function->getName();
+    }
+
+    llvm::Function* getFunction() const
+    {
+        return m_function;
+    }
+
+public:
+    static bool classof(const PDGLLVMNode* node)
+    {
+        return node->getNodeType() == NodeType::FunctionNode;
+    }
+
+    static bool classof(const PDGNode* node)
+    {
+        return llvm::isa<PDGLLVMNode>(node) && classof(llvm::cast<PDGLLVMNode>(node));
+    }
+
+private:
+    llvm::Function* m_function;
+}; // class PDGLLVMFunctionNode
 
 class PDGLLVMBasicBlockNode : public PDGLLVMNode
 {

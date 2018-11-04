@@ -75,6 +75,7 @@ public:
     void visitCallInst(llvm::CallInst& I);
     void visitInvokeInst(llvm::InvokeInst& I);
     void visitTerminatorInst(llvm::TerminatorInst& I);
+    void visitReturnInst(llvm::ReturnInst& I);
 
     // all instructions not handled individually will get here
     void visitInstruction(llvm::Instruction& I);

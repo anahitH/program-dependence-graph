@@ -42,11 +42,10 @@ void PDGBuilder::build()
     visitGlobals();
 
     for (auto& F : *m_module) {
-        if (F.getName() != "update") {
-            continue;
-        }
+        m_pdg->addFunctionNode(&F);
         if (F.isDeclaration()) {
-            buildFunctionDefinition(&F);
+            //buildFunctionDefinition(&F);
+            continue;
         }
         buildFunctionPDG(&F);
         m_currentFPDG.reset();
@@ -132,7 +131,7 @@ void PDGBuilder::addControlEdgesForBlock(llvm::BasicBlock& B)
 void PDGBuilder::visitBranchInst(llvm::BranchInst& I)
 {
     // TODO: output this for debug mode only
-    llvm::dbgs() << "Branch Inst: " << I << "\n";
+    //llvm::dbgs() << "Branch Inst: " << I << "\n";
     if (I.isConditional()) {
         llvm::Value* cond = I.getCondition();
         if (auto sourceNode = getNodeFor(cond)) {
@@ -146,7 +145,7 @@ void PDGBuilder::visitBranchInst(llvm::BranchInst& I)
 void PDGBuilder::visitLoadInst(llvm::LoadInst& I)
 {
     // TODO: output this for debug mode only
-    llvm::dbgs() << "Load Inst: " << I << "\n";
+    //llvm::dbgs() << "Load Inst: " << I << "\n";
     auto destNode = PDGNodeTy(new PDGLLVMInstructionNode(&I));
     m_currentFPDG->addNode(&I, destNode);
     connectToDefSite(&I, destNode);
@@ -155,7 +154,7 @@ void PDGBuilder::visitLoadInst(llvm::LoadInst& I)
 void PDGBuilder::visitStoreInst(llvm::StoreInst& I)
 {
     // TODO: output this for debug mode only
-    llvm::dbgs() << "Store Inst: " << I << "\n";
+    //llvm::dbgs() << "Store Inst: " << I << "\n";
     auto* valueOp = I.getValueOperand();
     auto sourceNode = getNodeFor(valueOp);
     if (!sourceNode) {
@@ -168,49 +167,49 @@ void PDGBuilder::visitStoreInst(llvm::StoreInst& I)
 
 void PDGBuilder::visitGetElementPtrInst(llvm::GetElementPtrInst& I)
 {
-    llvm::dbgs() << "GetElementPtr Inst: " << I << "\n";
+    //llvm::dbgs() << "GetElementPtr Inst: " << I << "\n";
     // TODO: see if needs special implementation
     visitInstruction(I);
 }
 
 void PDGBuilder::visitPhiNode(llvm::PHINode& I)
 {
-    llvm::dbgs() << "Phi Inst: " << I << "\n";
+    //llvm::dbgs() << "Phi Inst: " << I << "\n";
     // TODO: see if needs special implementation
     visitInstruction(I);
 }
 
 void PDGBuilder::visitMemSetInst(llvm::MemSetInst& I)
 {
-    llvm::dbgs() << "MemSet Inst: " << I << "\n";
+    //llvm::dbgs() << "MemSet Inst: " << I << "\n";
     // TODO: see if needs special implementation
     visitInstruction(I);
 }
 
 void PDGBuilder::visitMemCpyInst(llvm::MemCpyInst& I)
 {
-    llvm::dbgs() << "MemCpy Inst: " << I << "\n";
+    //llvm::dbgs() << "MemCpy Inst: " << I << "\n";
     // TODO: see if needs special implementation
     visitInstruction(I);
 }
 
 void PDGBuilder::visitMemMoveInst(llvm::MemMoveInst &I)
 {
-    llvm::dbgs() << "MemMove Inst: " << I << "\n";
+    //llvm::dbgs() << "MemMove Inst: " << I << "\n";
     // TODO: see if needs special implementation
     visitInstruction(I);
 }
 
 void PDGBuilder::visitMemTransferInst(llvm::MemTransferInst &I)
 {
-    llvm::dbgs() << "MemTransfer Inst: " << I << "\n";
+    //llvm::dbgs() << "MemTransfer Inst: " << I << "\n";
     // TODO: see if needs special implementation
     visitInstruction(I);
 }
 
 void PDGBuilder::visitMemIntrinsic(llvm::MemIntrinsic &I)
 {
-    llvm::dbgs() << "MemInstrinsic Inst: " << I << "\n";
+    //llvm::dbgs() << "MemInstrinsic Inst: " << I << "\n";
     // TODO: see if needs special implementation
     visitInstruction(I);
 }
@@ -218,14 +217,14 @@ void PDGBuilder::visitMemIntrinsic(llvm::MemIntrinsic &I)
 void PDGBuilder::visitCallInst(llvm::CallInst& I)
 {
     // TODO: think about external calls
-    llvm::dbgs() << "Call Inst: " << I << "\n";
+    //llvm::dbgs() << "Call Inst: " << I << "\n";
     llvm::CallSite callSite(&I);
     visitCallSite(callSite);
 }
 
 void PDGBuilder::visitInvokeInst(llvm::InvokeInst& I)
 {
-    llvm::dbgs() << "Invoke Inst: " << I << "\n";
+    //llvm::dbgs() << "Invoke Inst: " << I << "\n";
     llvm::CallSite callSite(&I);
     visitCallSite(callSite);
     visitTerminatorInst(I);
@@ -241,6 +240,20 @@ void PDGBuilder::visitTerminatorInst(llvm::TerminatorInst& I)
             addControlEdge(sourceNode, destNode);
         }
     }
+}
+
+void PDGBuilder::visitReturnInst(llvm::ReturnInst& I)
+{
+    if (!I.getReturnValue()) {
+        return;
+    }
+    auto returnType = I.getReturnValue()->getType();
+    if (returnType->isVoidTy()) {
+        return;
+    }
+    auto sourceNode = getInstructionNodeFor(&I);
+    auto destNode = m_pdg->getFunctionNode(I.getFunction());
+    addDataEdge(sourceNode, destNode);
 }
 
 void PDGBuilder::visitInstruction(llvm::Instruction& I)
@@ -263,10 +276,21 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
     } else {
         callees = m_indCSResults->getIndCSCallees(callSite);
     }
+    if (!callSite.getFunctionType()->isVoidTy()) {
+        for (auto callee : callees) {
+            if (!m_pdg->hasFunctionNode(callee)) {
+                m_pdg->addFunctionNode(callee);
+            }
+            auto calleeNode = m_pdg->getFunctionNode(callee);
+            addDataEdge(calleeNode, destNode);
+        }
+    }
     for (unsigned i = 0; i < callSite.getNumArgOperands(); ++i) {
         if (auto* val = llvm::dyn_cast<llvm::Value>(callSite.getArgOperand(i))) {
             auto sourceNode = getNodeFor(val);
-            if (val->getType()->isPointerTy()) {
+            if (val->getType()->isPointerTy()
+                    && !llvm::isa<PDGNullNode>(sourceNode.get())
+                    && !llvm::isa<llvm::Function>(val)) {
                 //llvm::dbgs() << *val << "\n";
                 connectToDefSite(val, sourceNode);
             }
@@ -318,8 +342,9 @@ PDGBuilder::PDGNodeTy PDGBuilder::getNodeFor(llvm::Value* value)
         assert(m_currentFPDG->hasFormalArgNode(argument));
         return m_currentFPDG->getFormalArgNode(argument);
     }
-
-    if (auto* constant = llvm::dyn_cast<llvm::Constant>(value)) {
+    if (auto* nullValue = llvm::dyn_cast<llvm::ConstantPointerNull>(value)) {
+        m_currentFPDG->addNode(value, PDGNodeTy(new PDGNullNode()));
+    } else if (auto* constant = llvm::dyn_cast<llvm::Constant>(value)) {
         m_currentFPDG->addNode(value, PDGNodeTy(new PDGLLVMConstantNode(constant)));
     } else if (auto* instr = llvm::dyn_cast<llvm::Instruction>(value)) {
         m_currentFPDG->addNode(value, PDGNodeTy(new PDGLLVMInstructionNode(instr)));

@@ -67,6 +67,9 @@ DefUseResults::DefSite DGDefUseAnalysisResults::getPdgDefNode(llvm::Value* value
     std::vector<llvm::BasicBlock*> blocks;
 
     auto *mem = m_rd->getMapping(value);
+    if (!mem) {
+        return DefSite(nullptr, PDGNodeTy());
+    }
     for (const auto& ptr : pts->pointsTo) {
         if (!ptr.isValid() || ptr.isInvalidated()) {
             continue;
