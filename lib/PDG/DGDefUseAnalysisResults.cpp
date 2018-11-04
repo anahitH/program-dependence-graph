@@ -44,7 +44,8 @@ DefUseResults::DefSite DGDefUseAnalysisResults::getDefNode(llvm::Value* value)
     }
     m_valueDefSite.insert(std::make_pair(value, nulldefSite));
     auto defNode = getPdgDefNode(value, pts);
-    return nulldefSite;
+    m_valueDefSite.insert(std::make_pair(value, defNode));
+    return defNode;
 }
 
 dg::analysis::pta::PSNode* DGDefUseAnalysisResults::getPointsTo(llvm::Value* value)

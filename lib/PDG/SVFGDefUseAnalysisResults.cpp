@@ -16,6 +16,7 @@ void printNodeType(SVFGNode* node)
       MPhi, MIntraPhi, MInterPhi, FRet,
       ARet, AParm, APIN, APOUT,
       FParm, FPIN, FPOUT, NPtr*/
+    llvm::dbgs() << " Node type ";
     if (node->getNodeKind() == SVFGNode::Addr) {
         llvm::dbgs() << "Addr\n";
     } else if (node->getNodeKind() == SVFGNode::Copy) {
@@ -80,9 +81,13 @@ bool hasIncomingEdges(PAGNode* pagNode)
 }
 
 void getValuesAndBlocks(MSSADEF* def,
+                        std::unordered_set<MSSADEF*>& processed_defs,
                         std::vector<llvm::Value*>& values,
                         std::vector<llvm::BasicBlock*>& blocks)
 {
+    if (!processed_defs.insert(def).second) {
+        return;
+    }
     if (def->getType() == MSSADEF::CallMSSACHI) {
         // TODO:
     } else if (def->getType() == MSSADEF::StoreMSSACHI) {
@@ -90,41 +95,44 @@ void getValuesAndBlocks(MSSADEF* def,
         values.push_back(const_cast<llvm::Instruction*>(storeChi->getStoreInst()->getInst()));
         blocks.push_back(const_cast<llvm::BasicBlock*>(storeChi->getBasicBlock()));
     } else if (def->getType() == MSSADEF::EntryMSSACHI) {
-        // TODO:
     } else if (def->getType() == MSSADEF::SSAPHI) {
         auto* phi = llvm::dyn_cast<MemSSA::PHI>(def);
         for (auto it = phi->opVerBegin(); it != phi->opVerEnd(); ++it) {
-            getValuesAndBlocks(it->second->getDef(), values, blocks);
+            getValuesAndBlocks(it->second->getDef(), processed_defs, values, blocks);
         }
     }
 }
 
 template <typename PHIType>
 void getValuesAndBlocks(PHIType* node,
+                        std::unordered_set<MSSADEF*>& processed_defs,
                         std::vector<llvm::Value*>& values,
                         std::vector<llvm::BasicBlock*>& blocks)
 {
     for (auto it = node->opVerBegin(); it != node->opVerEnd(); ++it) {
         auto* def = it->second->getDef();
-        getValuesAndBlocks(def, values, blocks);
+        getValuesAndBlocks(def, processed_defs, values, blocks);
     }
 }
 
 void getValuesAndBlocks(IntraMSSAPHISVFGNode* svfgNode,
+                        std::unordered_set<MSSADEF*>& processed_defs,
                         std::vector<llvm::Value*>& values,
                         std::vector<llvm::BasicBlock*>& blocks)
 {
-    getValuesAndBlocks<IntraMSSAPHISVFGNode>(svfgNode, values, blocks);
+    getValuesAndBlocks<IntraMSSAPHISVFGNode>(svfgNode, processed_defs, values, blocks);
 }
 
 void getValuesAndBlocks(InterMSSAPHISVFGNode* svfgNode,
+                        std::unordered_set<MSSADEF*>& processed_defs,
                         std::vector<llvm::Value*>& values,
                         std::vector<llvm::BasicBlock*>& blocks)
 {
-    getValuesAndBlocks<InterMSSAPHISVFGNode>(svfgNode, values, blocks);
+    getValuesAndBlocks<InterMSSAPHISVFGNode>(svfgNode, processed_defs, values, blocks);
 }
 
 void getValuesAndBlocks(PHISVFGNode* svfgNode,
+                        std::unordered_set<MSSADEF*>& processed_defs,
                         std::vector<llvm::Value*>& values,
                         std::vector<llvm::BasicBlock*>& blocks)
 {
@@ -143,6 +151,7 @@ void getValuesAndBlocks(SVFGNode* svfgNode,
                         std::vector<llvm::Value*>& values,
                         std::vector<llvm::BasicBlock*>& blocks)
 {
+    std::unordered_set<MSSADEF*> processed_defs;
     if (auto* stmtNode = llvm::dyn_cast<StmtSVFGNode>(svfgNode)) {
         values.push_back(const_cast<llvm::Instruction*>(stmtNode->getInst()));
         blocks.push_back(const_cast<llvm::BasicBlock*>(svfgNode->getBB()));
@@ -173,18 +182,18 @@ void getValuesAndBlocks(SVFGNode* svfgNode,
     } else if (auto* formalInNode = llvm::dyn_cast<FormalINSVFGNode>(svfgNode)) {
         // TODO:
     } else if (auto* formalOutNode = llvm::dyn_cast<FormalOUTSVFGNode>(svfgNode)) {
-        getValuesAndBlocks(formalOutNode->getRetMU()->getVer()->getDef(), values, blocks);
+        getValuesAndBlocks(formalOutNode->getRetMU()->getVer()->getDef(), processed_defs, values, blocks);
     } else if (auto* actualInNode = llvm::dyn_cast<ActualINSVFGNode>(svfgNode)) {
         // TODO:
     } else if (auto* actualOutNode = llvm::dyn_cast<ActualOUTSVFGNode>(svfgNode)) {
         // TODO:
     } else if (auto* intraMssaPhiNode = llvm::dyn_cast<IntraMSSAPHISVFGNode>(svfgNode)) {
-        getValuesAndBlocks(intraMssaPhiNode, values, blocks);
+        getValuesAndBlocks(intraMssaPhiNode, processed_defs, values, blocks);
     } else if (auto* interMssaPhiNode = llvm::dyn_cast<InterMSSAPHISVFGNode>(svfgNode)) {
-        getValuesAndBlocks(interMssaPhiNode, values, blocks);
+        getValuesAndBlocks(interMssaPhiNode, processed_defs, values, blocks);
     } else if (auto* null = llvm::dyn_cast<NullPtrSVFGNode>(svfgNode)) {
     } else if (auto* phiNode = llvm::dyn_cast<PHISVFGNode>(svfgNode)) {
-        getValuesAndBlocks(phiNode, values, blocks);
+        getValuesAndBlocks(phiNode, processed_defs, values, blocks);
     }
 }
 
@@ -249,6 +258,7 @@ std::unordered_set<SVFGNode*> SVFGDefUseAnalysisResults::getSVFGDefNodes(SVFGNod
             || srcNode->getNodeKind() == SVFGNode::TIntraPhi
             || srcNode->getNodeKind() == SVFGNode::TInterPhi) {
             defNodes.insert(srcNode);
+            printNodeType(srcNode);
             // TODO: what other node kinds can be added here?
         } else {
             printNodeType(srcNode);

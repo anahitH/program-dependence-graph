@@ -21,6 +21,7 @@ public:
     using const_llvm_iterator = PDGLLVMNodes::const_iterator;
     using iterator = PDGNodes::iterator;
     using const_iterator = PDGNodes::const_iterator;
+    using CallSites = std::vector<llvm::CallSite>;
 
 public:
     explicit FunctionPDG(llvm::Function* F)
@@ -118,6 +119,16 @@ public:
         m_functionNodes.push_back(node.get());
     }
 
+    void addCallSite(const llvm::CallSite& callSite)
+    {
+        m_callSites.push_back(callSite);
+    }
+
+    const CallSites& getCallSites() const
+    {
+        return m_callSites;
+    }
+
 public:
     arg_iterator formalArgBegin()
     {
@@ -175,6 +186,26 @@ public:
         return m_functionNodes.size();
     }
 
+    CallSites::iterator callSitesBegin()
+    {
+        return m_callSites.begin();
+    }
+
+    CallSites::const_iterator callSitesBegin() const
+    {
+        return m_callSites.begin();
+    }
+
+    CallSites::iterator callSitesEnd()
+    {
+        return m_callSites.end();
+    }
+
+    CallSites::const_iterator callSitesEnd() const
+    {
+        return m_callSites.end();
+    }
+
     const std::string getGraphName() const
     {
         return m_function->getName();
@@ -187,6 +218,7 @@ private:
     // TODO: formal ins, formal outs? formal vaargs?
     PDGLLVMNodes m_functionLLVMNodes;
     PDGNodes m_functionNodes;
+    CallSites m_callSites;
 }; // class FunctionPDG
 
 } // namespace pdg

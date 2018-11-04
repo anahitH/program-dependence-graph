@@ -47,8 +47,8 @@ public:
             llvm::dbgs() << "Reaching definitions in function " << F.getName() << "\n";
             for (auto& B : F) {
                 for (auto& I : B) {
-                    llvm::dbgs() << "   " << I << "\n";
                     if (auto* loadI = llvm::dyn_cast<llvm::LoadInst>(&I)) {
+                        llvm::dbgs() << "   " << I << "\n";
                         auto* ptrOp = loadI->getPointerOperand();
                         auto* pts = pta->getPointsTo(ptrOp);
                         if (!pts) {

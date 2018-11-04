@@ -31,17 +31,15 @@
 #include "SVF/PDG/PDGPointerAnalysis.h"
 
 #include <fstream>
+#include <memory>
 
-llvm::cl::opt<std::string> def_use(
-    "def-use",
-    llvm::cl::desc("Def-use analysis to use"),
-    llvm::cl::value_desc("def-use"));
+extern llvm::cl::opt<std::string> def_use;
 
-class PDGPrinterPass : public llvm::ModulePass
+class CallSiteConnectionsPrinter : public llvm::ModulePass
 {
 public:
     static char ID;
-    PDGPrinterPass()
+    CallSiteConnectionsPrinter()
         : llvm::ModulePass(ID)
     {
     }
@@ -74,7 +72,6 @@ public:
                 functionAAResults.insert(std::make_pair(&F, AARGetter(&F)));
             }
         }
-
         auto domTreeGetter = [&] (llvm::Function* F) {
             return &this->getAnalysis<llvm::DominatorTreeWrapperPass>(*F).getDomTree();
         };
@@ -100,16 +97,19 @@ public:
         using DominanceResultsTy = PDGBuilder::DominanceResultsTy;
         DefUseResultsTy defUse;
         if (def_use == "dg") {
-            defUse = DefUseResultsTy(new pdg::DGDefUseAnalysisResults(&M));
+            llvm::dbgs() << "Using dg for def-use information\n";
+            defUse = DefUseResultsTy(new DGDefUseAnalysisResults(&M));
         } else if (def_use == "llvm") {
+            llvm::dbgs() << "Using llvm for def-use information\n";
             defUse = DefUseResultsTy(new LLVMMemorySSADefUseAnalysisResults(memSSAGetter, aliasAnalysisResGetter));
         } else {
+            llvm::dbgs() << "Using (default) svfg for def-use information\n";
             defUse = DefUseResultsTy(new SVFGDefUseAnalysisResults(svfg));
         }
         IndCSResultsTy indCSRes = IndCSResultsTy(new
                 pdg::SVFGIndirectCallSiteResults(ander->getPTACallGraph()));
         DominanceResultsTy domResults = DominanceResultsTy(new LLVMDominanceTree(domTreeGetter,
-                                                                                 postdomTreeGetter));
+                    postdomTreeGetter));
 
         pdg::PDGBuilder pdgBuilder(&M);
         pdgBuilder.setDesUseResults(defUse);
@@ -118,33 +118,64 @@ public:
         pdgBuilder.build();
 
         auto pdg = pdgBuilder.getPDG();
-        for (auto& F : M) {
-            if (F.isDeclaration()) {
-                continue;
-            }
-            if (!pdg->hasFunctionPDG(&F)) {
-                llvm::dbgs() << "Function does not have pdg " << F.getName() << "\n";
-                continue;
-            }
-            auto functionPDG = pdg->getFunctionPDG(&F);
-            pdg::FunctionPDG* Graph = functionPDG.get();
-            std::string Filename = "cfg." + F.getName().str() + ".dot";
-            std::error_code EC;
-            llvm::errs() << "Writing '" << Filename << "'...";
-            llvm::raw_fd_ostream File(Filename, EC, llvm::sys::fs::F_Text);
-            std::string GraphName = llvm::DOTGraphTraits<pdg::FunctionPDG*>::getGraphName(Graph);
-            std::string Title = GraphName + " for '" + F.getName().str() + "' function";
-            if (!EC) {
-                llvm::WriteGraph(File, Graph, false, Title);
-            } else {
-                llvm::errs() << "  error opening file for writing!";
-            }
-            llvm::errs() << "\n";
-        }
-        return false;
+
+        dumpCallSitesConnections(M, pdg);
     }
 
-}; // class PDGPrinterPass
+private:
+    void dumpCallSitesConnections(llvm::Module& M, PDGBuilder::PDGType pdg)
+    {
+        for (auto& F : M) {
+            llvm::dbgs() << "Function: " << F.getName() << "\n";
+            if (!pdg->hasFunctionPDG(&F)) {
+                llvm::dbgs() << "   No PDG built.\n"; 
+                continue;
+            }
+            auto F_pdg = pdg->getFunctionPDG(&F);
+            const auto& callSites = F_pdg->getCallSites();
+            if (callSites.empty()) {
+                llvm::dbgs() << "   No caller\n";
+            }
+            for (auto& callSite : callSites) {
+                dumpCallSiteConnections(&F, callSite, F_pdg);
+            }
+        }
+    }
 
-char PDGPrinterPass::ID = 0;
-static llvm::RegisterPass<PDGPrinterPass> X("dump-pdg","Dump pdg in dot format");
+    void dumpCallSiteConnections(llvm::Function* callee,
+                                 const llvm::CallSite& cs,
+                                 PDG::FunctionPDGTy F_pdg)
+    {
+        auto* call_inst = cs.getInstruction();
+        llvm::dbgs() << "   Call Site: " << *call_inst << "\n";
+        llvm::Function* caller = cs.getInstruction()->getFunction();
+        llvm::dbgs() << "   Caller: " << caller->getName() << "\n";
+        for (auto arg_it = callee->arg_begin(); arg_it != callee->arg_end(); ++arg_it) {
+            llvm::Argument* arg = &*arg_it;
+            llvm::dbgs() << "   Arg: " << *arg << "\n";
+            assert(F_pdg->hasFormalArgNode(arg));
+            auto arg_node = F_pdg->getFormalArgNode(arg);
+            for (auto edge_it = arg_node->inEdgesBegin();
+                    edge_it != arg_node->inEdgesEnd();
+                    ++edge_it) {
+                auto src = (*edge_it)->getSource();
+                if (auto* actual_arg = llvm::dyn_cast<pdg::PDGLLVMActualArgumentNode>(src.get())) {
+                    if (cs == actual_arg->getCallSite()) {
+                        llvm::dbgs() << "       conn: " << src->getNodeAsString() << "\n";
+                    }
+                } else {
+                    llvm::dbgs() << "       conn: " << src->getNodeAsString() << "\n";
+                }
+            }
+
+        }
+
+        //assert(pdg->hasFunctionPDG(caller));
+        //auto caller_pdg = pdg->getFunctionPDG(caller);
+        //assert(caller_pdg->hasNode(call_inst));
+        //auto* node = caller_pdg->getNode(call_inst);
+    }
+};
+
+char CallSiteConnectionsPrinter::ID = 0;
+static llvm::RegisterPass<CallSiteConnectionsPrinter> X("dump-cs-info","Dump Call site information");

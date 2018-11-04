@@ -42,6 +42,9 @@ void PDGBuilder::build()
     visitGlobals();
 
     for (auto& F : *m_module) {
+        if (F.getName() != "update") {
+            continue;
+        }
         if (F.isDeclaration()) {
             buildFunctionDefinition(&F);
         }
@@ -113,7 +116,7 @@ void PDGBuilder::addControlEdgesForBlock(llvm::BasicBlock& B)
         return;
     }
     auto blockNode = m_currentFPDG->getNode(&B);
-    // Don't add control edges if block is not conreol dependent on something
+    // Don't add control edges if block is not control dependent on something
     if (blockNode->getInEdges().empty()) {
         return;
     }
@@ -264,7 +267,7 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
         if (auto* val = llvm::dyn_cast<llvm::Value>(callSite.getArgOperand(i))) {
             auto sourceNode = getNodeFor(val);
             if (val->getType()->isPointerTy()) {
-                llvm::dbgs() << *val << "\n";
+                //llvm::dbgs() << *val << "\n";
                 connectToDefSite(val, sourceNode);
             }
             auto actualArgNode = PDGNodeTy(new PDGLLVMActualArgumentNode(callSite, val));
@@ -272,7 +275,7 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
             addDataEdge(actualArgNode, destNode);
             m_currentFPDG->addNode(actualArgNode);
             // connect actual args with formal args
-            addActualArgumentNodeConnections(actualArgNode, i, callees);
+            addActualArgumentNodeConnections(actualArgNode, i, callSite, callees);
         }
     }
 }
@@ -359,6 +362,7 @@ void PDGBuilder::connectToDefSite(llvm::Value* value, PDGNodeTy valueNode)
 
 void PDGBuilder::addActualArgumentNodeConnections(PDGNodeTy actualArgNode,
                                                   unsigned argIdx,
+                                                  const llvm::CallSite& cs,
                                                   const FunctionSet& callees)
 {
     for (auto& F : callees) {
@@ -370,6 +374,7 @@ void PDGBuilder::addActualArgumentNodeConnections(PDGNodeTy actualArgNode,
             continue;
         }
         FunctionPDGTy calleePDG = m_pdg->getFunctionPDG(F);
+        calleePDG->addCallSite(cs);
         llvm::Argument* formalArg = &*(F->arg_begin() + argIdx);
         if (!formalArg) {
             continue;

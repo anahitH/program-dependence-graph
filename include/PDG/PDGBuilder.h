@@ -96,6 +96,7 @@ private:
     void connectToDefSite(llvm::Value* value, PDGNodeTy valueNode);
     void addActualArgumentNodeConnections(PDGNodeTy actualArgNode,
                                           unsigned argIdx,
+                                          const llvm::CallSite& cs,
                                           const FunctionSet& callees);
     void addPhiNodeConnections(PDGNodeTy node);
 
