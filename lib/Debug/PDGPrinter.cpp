@@ -100,10 +100,13 @@ public:
         using DominanceResultsTy = PDGBuilder::DominanceResultsTy;
         DefUseResultsTy defUse;
         if (def_use == "dg") {
+            llvm::dbgs() << "Use DG def-use analysis\n";
             defUse = DefUseResultsTy(new pdg::DGDefUseAnalysisResults(&M));
         } else if (def_use == "llvm") {
+            llvm::dbgs() << "Use llvm def-use analysis\n";
             defUse = DefUseResultsTy(new LLVMMemorySSADefUseAnalysisResults(memSSAGetter, aliasAnalysisResGetter));
         } else {
+            llvm::dbgs() << "Use llvm svfg analysis\n";
             defUse = DefUseResultsTy(new SVFGDefUseAnalysisResults(svfg));
         }
         IndCSResultsTy indCSRes = IndCSResultsTy(new

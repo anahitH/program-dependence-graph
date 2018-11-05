@@ -18,6 +18,7 @@ public:
     enum NodeType : unsigned {
         InstructionNode = 0,
         FormalArgumentNode,
+        VaArgumentNode,
         ActualArgumentNode,
         GlobalVariableNode,
         ConstantExprNode,
@@ -118,7 +119,39 @@ public:
 
 private:
     llvm::Function* m_function;
-}; // class PDGArgumentNode
+}; // class PDGFormalArgumentNode
+
+class PDGLLVMVaArgNode : public PDGLLVMNode
+{
+public:
+    explicit PDGLLVMVaArgNode(llvm::Function* function)
+        : PDGLLVMNode(function, NodeType::VaArgumentNode)
+        , m_function(function)
+    {
+    }
+
+public:
+    virtual std::string getNodeAsString() const override;
+
+    llvm::Function* getFunction() const
+    {
+        return m_function;
+    }
+
+public:
+    static bool classof(const PDGLLVMNode* node)
+    {
+        return node->getNodeType() == NodeType::VaArgumentNode;
+    }
+
+    static bool classof(const PDGNode* node)
+    {
+        return llvm::isa<PDGLLVMNode>(node) && classof(llvm::cast<PDGLLVMNode>(node));
+    }
+
+private:
+    llvm::Function* m_function;
+}; // class PDGLLVMVaArgNode
 
 class PDGLLVMActualArgumentNode : public PDGLLVMNode
 {

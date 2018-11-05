@@ -27,5 +27,14 @@ std::string PDGPhiNode::getNodeAsString() const
     return rawstr.str();
 }
 
+std::string PDGLLVMVaArgNode::getNodeAsString() const
+{
+    std::string str;
+    llvm::raw_string_ostream rawstr(str);
+    rawstr << "VAArg ";
+    rawstr << m_function->getName();
+    return rawstr.str();
+}
+
 } // namespace pdg
 

@@ -288,6 +288,9 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
     for (unsigned i = 0; i < callSite.getNumArgOperands(); ++i) {
         if (auto* val = llvm::dyn_cast<llvm::Value>(callSite.getArgOperand(i))) {
             auto sourceNode = getNodeFor(val);
+            if (!sourceNode) {
+                continue;
+            }
             if (val->getType()->isPointerTy()
                     && !llvm::isa<PDGNullNode>(sourceNode.get())
                     && !llvm::isa<llvm::Function>(val)) {
@@ -301,6 +304,13 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
             // connect actual args with formal args
             addActualArgumentNodeConnections(actualArgNode, i, callSite, callees);
         }
+    }
+    for (auto& F : callees) {
+        if (!m_pdg->hasFunctionPDG(F)) {
+            buildFunctionDefinition(F);
+        }
+        FunctionPDGTy calleePDG = m_pdg->getFunctionPDG(F);
+        calleePDG->addCallSite(callSite);
     }
 }
 
@@ -394,21 +404,26 @@ void PDGBuilder::addActualArgumentNodeConnections(PDGNodeTy actualArgNode,
         if (!m_pdg->hasFunctionPDG(F)) {
             buildFunctionDefinition(F);
         }
-        // TODO: consider varargs
-        if (F->getFunctionType()->getNumParams() < argIdx) {
-            continue;
-        }
         FunctionPDGTy calleePDG = m_pdg->getFunctionPDG(F);
-        calleePDG->addCallSite(cs);
-        llvm::Argument* formalArg = &*(F->arg_begin() + argIdx);
-        if (!formalArg) {
-            continue;
+        PDGNodeTy formalArgNode;
+        if (F->getFunctionType()->getNumParams() <= argIdx) {
+            if (!calleePDG->isVarArg()) {
+                continue;
+            }
+            formalArgNode = calleePDG->getVaArgNode();
+        } else {
+            llvm::Argument* formalArg = &*(F->arg_begin() + argIdx);
+            if (!formalArg) {
+                continue;
+            }
+            if (!calleePDG->hasFormalArgNode(formalArg)) {
+                calleePDG->addFormalArgNode(formalArg);
+            }
+            formalArgNode = calleePDG->getFormalArgNode(formalArg);
         }
-        if (!calleePDG->hasFormalArgNode(formalArg)) {
-            calleePDG->addFormalArgNode(formalArg);
+        if (formalArgNode) {
+            addDataEdge(actualArgNode, formalArgNode);
         }
-        auto formalArgNode = calleePDG->getFormalArgNode(formalArg);
-        addDataEdge(actualArgNode, formalArgNode);
     }
 }
 

@@ -28,6 +28,9 @@ public:
         : m_function(F)
         , m_functionDefinitionBuilt(false)
     {
+        if (F->isVarArg()) {
+            m_vaArgNode.reset(new PDGLLVMVaArgNode(F));
+        }
     }
 
     ~FunctionPDG() = default;
@@ -43,6 +46,12 @@ public:
         return m_function;
     }
 
+    const llvm::Function* getFunction() const
+    {
+        return const_cast<FunctionPDG*>(this)->getFunction();
+    }
+
+
     void setFunctionDefBuilt(bool built)
     {
         m_functionDefinitionBuilt = built;
@@ -52,9 +61,19 @@ public:
         return m_functionDefinitionBuilt;
     }
 
-    const llvm::Function* getFunction() const
+    bool isVarArg() const
     {
-        return const_cast<FunctionPDG*>(this)->getFunction();
+        return m_function->isVarArg();
+    }
+
+    PDGNodeTy getVaArgNode()
+    {
+        return m_vaArgNode;
+    }
+
+    const PDGNodeTy getVaArgNode() const
+    {
+        return m_vaArgNode;
     }
 
     bool hasFormalArgNode(llvm::Argument* arg) const
@@ -215,6 +234,7 @@ private:
     llvm::Function* m_function;
     bool m_functionDefinitionBuilt;
     PDGLLVMArgumentNodes m_formalArgNodes;
+    PDGNodeTy m_vaArgNode;
     // TODO: formal ins, formal outs? formal vaargs?
     PDGLLVMNodes m_functionLLVMNodes;
     PDGNodes m_functionNodes;
