@@ -44,7 +44,7 @@ void PDGBuilder::build()
     for (auto& F : *m_module) {
         m_pdg->addFunctionNode(&F);
         if (F.isDeclaration()) {
-            //buildFunctionDefinition(&F);
+            buildFunctionDefinition(&F);
             continue;
         }
         buildFunctionPDG(&F);
@@ -61,11 +61,11 @@ void PDGBuilder::visitGlobals()
     }
 }
 
-PDGBuilder::FunctionPDGTy PDGBuilder::buildFunctionDefinition(llvm::Function* F)
+void PDGBuilder::buildFunctionDefinition(llvm::Function* F)
 {
-    FunctionPDGTy functionPDG = FunctionPDGTy(new FunctionPDG(F));
-    m_pdg->addFunctionPDG(F, functionPDG);
+    FunctionPDG* functionPDG = new FunctionPDG(F);
     visitFormalArguments(functionPDG, F);
+    m_pdg->addFunctionPDG(F, FunctionPDGTy(functionPDG));
 }
 
 void PDGBuilder::buildFunctionPDG(llvm::Function* F)
@@ -77,7 +77,7 @@ void PDGBuilder::buildFunctionPDG(llvm::Function* F)
         m_currentFPDG = m_pdg->getFunctionPDG(F);
     }
     if (!m_currentFPDG->isFunctionDefBuilt()) {
-        visitFormalArguments(m_currentFPDG, F);
+        visitFormalArguments(m_currentFPDG.get(), F);
     }
     for (auto& B : *F) {
         visitBlock(B);
@@ -85,7 +85,7 @@ void PDGBuilder::buildFunctionPDG(llvm::Function* F)
     }
 }
 
-void PDGBuilder::visitFormalArguments(FunctionPDGTy functionPDG, llvm::Function* F)
+void PDGBuilder::visitFormalArguments(FunctionPDG* functionPDG, llvm::Function* F)
 {
     for (auto arg_it = F->arg_begin();
             arg_it != F->arg_end();

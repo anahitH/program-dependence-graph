@@ -82,9 +82,9 @@ public:
 
 private:
     void buildFunctionPDG(llvm::Function* F);
-    FunctionPDGTy buildFunctionDefinition(llvm::Function* F);
+    void buildFunctionDefinition(llvm::Function* F);
     void visitGlobals();
-    void visitFormalArguments(FunctionPDGTy functionPDG, llvm::Function* F);
+    void visitFormalArguments(FunctionPDG* functionPDG, llvm::Function* F);
     void visitBlock(llvm::BasicBlock& B);
     void visitBlockInstructions(llvm::BasicBlock& B);
     void addControlEdgesForBlock(llvm::BasicBlock& B);
