@@ -25,6 +25,7 @@ add_library(pdg MODULE
         lib/PDG/IndirectCallSitesAnalysis.cpp
         lib/PDG/SVFGIndirectCallSiteResults.cpp
         lib/PDG/DGDefUseAnalysisResults.cpp
+        lib/Passes/PDGBuildPasses.cpp
         lib/Debug/PDGPrinter.cpp
         lib/Debug/CallSiteConnections.cpp
         lib/Debug/SVFGTraversal.cpp
@@ -57,7 +58,7 @@ install(TARGETS pdg
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT pdg)
-install(DIRECTORY ../include/
+install(DIRECTORY include/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/PDG
         COMPONENT pdg)
 
@@ -72,6 +73,8 @@ export(
         NAMESPACE pdg::
         FILE ${CMAKE_CURRENT_BINARY_DIR}/pdgTargets.cmake
 )
+
+export(PACKAGE pdg)
 
 write_basic_package_version_file(
         ${CMAKE_CURRENT_BINARY_DIR}/pdgConfigVersion.cmake

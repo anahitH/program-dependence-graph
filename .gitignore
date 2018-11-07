@@ -36,5 +36,12 @@
 include/.*.swp
 lib/.*.swp
 
+include/PDG/.*.swp
+include/Passes/.*.swp
+lib/PDG/.*.swp
+lib/Passes/.*.swp
+lib/Debug/.*.swp
+
+
 # Build files
 build/
