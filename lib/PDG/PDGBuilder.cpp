@@ -254,6 +254,7 @@ void PDGBuilder::visitReturnInst(llvm::ReturnInst& I)
     auto sourceNode = getInstructionNodeFor(&I);
     auto destNode = m_pdg->getFunctionNode(I.getFunction());
     addDataEdge(sourceNode, destNode);
+    visitInstruction(I);
 }
 
 void PDGBuilder::visitInstruction(llvm::Instruction& I)
