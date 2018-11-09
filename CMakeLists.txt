@@ -17,6 +17,7 @@ add_definitions(-DHAVE_LLVM)
 add_definitions(-DENABLE_CFG)
 
 add_library(pdg MODULE
+        lib/PDG/PDG.cpp
         lib/PDG/PDGBuilder.cpp
         lib/PDG/PDGLLVMNode.cpp
         lib/PDG/LLVMMemorySSADefUseAnalysisResults.cpp

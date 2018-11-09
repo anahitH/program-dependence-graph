@@ -1,6 +1,8 @@
+#pragma once
+
 #include "llvm/Pass.h"
 
-#include "PDG/PDG/PDG.h"
+#include "PDG/PDG.h"
 #include <memory>
 
 namespace pdg {

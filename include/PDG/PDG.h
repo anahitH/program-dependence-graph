@@ -3,17 +3,18 @@
 #include <memory>
 #include <unordered_map>
 
-#include "PDGLLVMNode.h"
-
 namespace llvm {
 
 class Module;
 class Function;
+class GlobalVariable;
 } // namespace llvm
 
 namespace pdg {
 
 class FunctionPDG;
+class PDGLLVMGlobalVariableNode;
+class PDGLLVMFunctionNode;
 
 /// Program Dependence Graph
 class PDG
@@ -90,27 +91,15 @@ public:
         return m_functionPDGs.find(F) != m_functionPDGs.end();
     }
 
-    PDGGlobalNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable)
-    {
-        assert(hasGlobalVariableNode(variable));
-        return m_globalVariableNodes.find(variable)->second;
-    }
-    PDGFunctionNodeTy getFunctionNode(llvm::Function* function)
-    {
-        assert(hasFunctionNode(function));
-        return m_functionNodes.find(function)->second;
-    }
+    PDGGlobalNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable);
+    PDGFunctionNodeTy getFunctionNode(llvm::Function* function);
 
     const PDGGlobalNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable) const
     {
         return const_cast<PDG*>(this)->getGlobalVariableNode(variable);
     }
 
-    FunctionPDGTy getFunctionPDG(llvm::Function* F)
-    {
-        assert(hasFunctionPDG(F));
-        return m_functionPDGs.find(F)->second;
-    }
+    FunctionPDGTy getFunctionPDG(llvm::Function* F);
     const FunctionPDGTy getFunctionPDG(llvm::Function* F) const
     {
         return const_cast<PDG*>(this)->getFunctionPDG(F);
@@ -121,29 +110,14 @@ public:
         return m_globalVariableNodes.insert(std::make_pair(variable, node)).second;
     }
 
-    bool addGlobalVariableNode(llvm::GlobalVariable* variable)
-    {
-        if (hasGlobalVariableNode(variable)) {
-            return false;
-        }
-        m_globalVariableNodes.insert(std::make_pair(variable, PDGGlobalNodeTy(new PDGLLVMGlobalVariableNode(variable))));
-        return true;
-    }
-
+    bool addGlobalVariableNode(llvm::GlobalVariable* variable);
     bool addFunctionNode(llvm::Function* function, PDGFunctionNodeTy node)
     {
         return m_functionNodes.insert(std::make_pair(function, node)).second;
     }
 
-    bool addFunctionNode(llvm::Function* function)
-    {
-        if (hasFunctionNode(function)) {
-            return false;
-        }
-        m_functionNodes.insert(std::make_pair(function, PDGFunctionNodeTy(new PDGLLVMFunctionNode(function))));
-        return true;
-    }
-
+    bool addFunctionNode(llvm::Function* function);
+    
     bool addFunctionPDG(llvm::Function* F, FunctionPDGTy functionPDG)
     {
         return m_functionPDGs.insert(std::make_pair(F, functionPDG)).second;
