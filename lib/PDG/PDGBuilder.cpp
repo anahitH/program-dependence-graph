@@ -298,7 +298,7 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
                 //llvm::dbgs() << *val << "\n";
                 connectToDefSite(val, sourceNode);
             }
-            auto actualArgNode = PDGNodeTy(new PDGLLVMActualArgumentNode(callSite, val));
+            auto actualArgNode = PDGNodeTy(new PDGLLVMActualArgumentNode(callSite, val, i));
             addDataEdge(sourceNode, actualArgNode);
             addDataEdge(actualArgNode, destNode);
             m_currentFPDG->addNode(actualArgNode);

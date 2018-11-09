@@ -258,7 +258,7 @@ std::unordered_set<SVFGNode*> SVFGDefUseAnalysisResults::getSVFGDefNodes(SVFGNod
             || srcNode->getNodeKind() == SVFGNode::TIntraPhi
             || srcNode->getNodeKind() == SVFGNode::TInterPhi) {
             defNodes.insert(srcNode);
-            printNodeType(srcNode);
+            //printNodeType(srcNode);
             // TODO: what other node kinds can be added here?
         } else {
             printNodeType(srcNode);

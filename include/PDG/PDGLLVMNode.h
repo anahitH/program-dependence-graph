@@ -156,9 +156,10 @@ private:
 class PDGLLVMActualArgumentNode : public PDGLLVMNode
 {
 public:
-    explicit PDGLLVMActualArgumentNode(llvm::CallSite& callSite, llvm::Value* actualArg)
+    explicit PDGLLVMActualArgumentNode(llvm::CallSite& callSite, llvm::Value* actualArg, unsigned argIdx)
         : PDGLLVMNode(actualArg, NodeType::ActualArgumentNode)
         , m_callSite(callSite)
+        , m_argIdx(argIdx)
     {
     }
 
@@ -166,6 +167,11 @@ public:
     const llvm::CallSite& getCallSite() const
     {
         return m_callSite;
+    }
+
+    const unsigned getArgIndex() const
+    {
+        return m_argIdx;
     }
 
 public:
@@ -181,6 +187,7 @@ public:
 
 private:
     llvm::CallSite m_callSite;
+    unsigned m_argIdx;
 }; // class PDGArgumentNode
 
 
