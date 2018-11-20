@@ -277,14 +277,15 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
     } else {
         callees = m_indCSResults->getIndCSCallees(callSite);
     }
-    if (!callSite.getFunctionType()->isVoidTy()) {
-        for (auto callee : callees) {
-            if (!m_pdg->hasFunctionNode(callee)) {
-                m_pdg->addFunctionNode(callee);
-            }
-            auto calleeNode = m_pdg->getFunctionNode(callee);
+    for (auto callee : callees) {
+        if (!m_pdg->hasFunctionNode(callee)) {
+            m_pdg->addFunctionNode(callee);
+        }
+        auto calleeNode = m_pdg->getFunctionNode(callee);
+        if (!callSite.getFunctionType()->isVoidTy()) {
             addDataEdge(calleeNode, destNode);
         }
+        addControlEdge(destNode, calleeNode);
     }
     for (unsigned i = 0; i < callSite.getNumArgOperands(); ++i) {
         if (auto* val = llvm::dyn_cast<llvm::Value>(callSite.getArgOperand(i))) {

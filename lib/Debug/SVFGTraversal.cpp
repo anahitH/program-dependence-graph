@@ -15,6 +15,8 @@
 #include "SVF/MemoryModel/PointerAnalysis.h"
 #include "SVF/WPA/Andersen.h"
 
+#include <unordered_set>
+
 bool hasIncomingEdges(PAGNode* pagNode)
 {
     //Addr, Copy, Store, Load, Call, Ret, NormalGep, VariantGep, ThreadFork, ThreadJoin
@@ -163,6 +165,9 @@ public:
 
     void processPAGNode(PAGNode* node, SVFG* svfg)
     {
+        if (!svfg->hasDef(node)) {
+            return;
+        }
         auto* svfgNode = svfg->getDefSVFGNode(node);
         llvm::dbgs() << "   SVFG node " << *svfgNode << "\n";
         processSVFGNode(const_cast<SVFGNode*>(svfgNode), svfg);
@@ -206,15 +211,15 @@ public:
     {
         llvm::dbgs() << "INCOMING EDGES\n";
         for (auto inedge_it = svfgNode->InEdgeBegin(); inedge_it != svfgNode->InEdgeEnd(); ++inedge_it) {
-            printEdge(*inedge_it, svfg);
+            printEdge(*inedge_it, svfg, true);
         }
         llvm::dbgs() << "OUT EDGES\n";
         for (auto edge_it = svfgNode->OutEdgeBegin(); edge_it != svfgNode->OutEdgeEnd(); ++edge_it) {
-            printEdge(*edge_it, svfg);
+            printEdge(*edge_it, svfg, false);
         }
     }
 
-    void printEdge(SVFGEdge* edge, SVFG* svfg)
+    void printEdge(SVFGEdge* edge, SVFG* svfg, bool incoming)
     {
         llvm::dbgs() << "   Edge type ";
         auto edgeKind = edge->getEdgeKind();
@@ -233,15 +238,23 @@ public:
         } else if (edgeKind == SVFGEdge::TheadMHPIndirect) {
             llvm::dbgs() << "TheadMHPIndirect\n";
         }
-        auto* srcNode = edge->getSrcNode();
-        llvm::dbgs() << "       Edge node\n";
-        processSVFGNode(const_cast<SVFGNode*>(srcNode), svfg);
+        SVFGNode* node = nullptr;
+        if (incoming) {
+            node = edge->getSrcNode();
+            llvm::dbgs() << "       Edge Src node\n";
+        } else {
+            node = edge->getDstNode();
+            llvm::dbgs() << "       Edge Dst node\n";
+        }
+        processSVFGNode(const_cast<SVFGNode*>(node), svfg);
 
     }
 
     void processStmtNode(StmtSVFGNode* stmtNode, SVFG* svfg)
     {
-        llvm::dbgs() << "       Stmt Node " << *stmtNode->getInst() << "\n";
+        if (stmtNode->getInst()) {
+            llvm::dbgs() << "       Stmt Node " << *stmtNode->getInst() << "\n";
+        }
         SVFGNode* defNode = nullptr;
         if (auto* addrNode = llvm::dyn_cast<AddrSVFGNode>(stmtNode)) {
             if (svfg->hasDef(addrNode->getPAGSrcNode())) {
@@ -355,20 +368,29 @@ public:
 
     void processIntraMssaPhiNode(IntraMSSAPHISVFGNode* intraMssaPhiNode, SVFG* svfg)
     {
+        std::unordered_set<MSSADEF*> defs;
+        auto* res_def = const_cast< MSSADEF*>(intraMssaPhiNode->getRes());
+        if (!defs.insert(res_def).second) {
+            return;
+        }
         llvm::dbgs() << "       Intra MSSA phi node\n";
         llvm::dbgs() << "       Res \n";
-        const_cast< MSSADEF*>(intraMssaPhiNode->getRes())->dump();
+        res_def->dump();
+        llvm::dbgs() << intraMssaPhiNode->getOpVerNum() << "\n";
         for (auto it = intraMssaPhiNode->opVerBegin(); it != intraMssaPhiNode->opVerEnd(); ++it) {
             auto* def = it->second->getDef();
             llvm::dbgs() << "       op ver def \n";
-            processMSSADef(def);
+            processMSSADef(def, defs);
             //const_cast< MSSADEF*>(def)->dump();
             //llvm::dbgs() << "       Op Ver mem region " << def->getMR()->dumpStr() << "\n";
         }
     }
 
-    void processMSSADef(MSSADEF* def)
+    void processMSSADef(MSSADEF* def, std::unordered_set<MSSADEF*>& defs)
     {
+        if (!defs.insert(def).second) {
+            return;
+        }
         if (def->getType() == MSSADEF::CallMSSACHI) {
             auto* callChi = llvm::dyn_cast<SVFG::CALLCHI>(def);
             llvm::dbgs() << "           Call CHI ";
@@ -382,7 +404,7 @@ public:
             auto* phi = llvm::dyn_cast<MemSSA::PHI>(def);
             llvm::dbgs() << "           Phi\n";
             for (auto it = phi->opVerBegin(); it != phi->opVerEnd(); ++it) {
-                processMSSADef(it->second->getDef());
+                processMSSADef(it->second->getDef(), defs);
             }
         }
     }
