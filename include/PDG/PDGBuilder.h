@@ -30,6 +30,8 @@ class PDGBuilder : public llvm::InstVisitor<PDGBuilder>
 {
 public:
     using PDGType = std::shared_ptr<PDG>;
+    using PDGGlobalNodeTy = std::shared_ptr<PDGLLVMGlobalVariableNode>;
+    using ArgNodeTy = std::shared_ptr<PDGLLVMFormalArgumentNode>;
     using FunctionPDGTy = PDG::FunctionPDGTy;
     using DefUseResultsTy = std::shared_ptr<DefUseResults>;
     using IndCSResultsTy = std::shared_ptr<IndirectCallSiteResults>;
@@ -80,6 +82,14 @@ public:
     // all instructions not handled individually will get here
     void visitInstruction(llvm::Instruction& I);
 
+protected:
+    virtual PDGNodeTy createInstructionNodeFor(llvm::Instruction* instr);
+    virtual PDGNodeTy createBasicBlockNodeFor(llvm::BasicBlock* block);
+    virtual PDGGlobalNodeTy createGlobalNodeFor(llvm::GlobalVariable* global);
+    virtual ArgNodeTy createFormalArgNodeFor(llvm::Argument* arg);
+    virtual PDGNodeTy createNullNode();
+    virtual PDGNodeTy createConstantNodeFor(llvm::Constant* constant);
+
 private:
     void buildFunctionPDG(llvm::Function* F);
     void buildFunctionDefinition(llvm::Function* F);
@@ -87,13 +97,13 @@ private:
     void visitFormalArguments(FunctionPDG* functionPDG, llvm::Function* F);
     void visitBlock(llvm::BasicBlock& B);
     void visitBlockInstructions(llvm::BasicBlock& B);
+    PDGNodeTy getInstructionNodeFor(llvm::Instruction* instr);
+    PDGNodeTy getNodeFor(llvm::Value* value);
+    PDGNodeTy getNodeFor(llvm::BasicBlock* block);
     void addControlEdgesForBlock(llvm::BasicBlock& B);
     void visitCallSite(llvm::CallSite& callSite);
     void addDataEdge(PDGNodeTy source, PDGNodeTy dest);
     void addControlEdge(PDGNodeTy source, PDGNodeTy dest);
-    PDGNodeTy getInstructionNodeFor(llvm::Instruction* instr);
-    PDGNodeTy getNodeFor(llvm::Value* value);
-    PDGNodeTy getNodeFor(llvm::BasicBlock* block);
     void connectToDefSite(llvm::Value* value, PDGNodeTy valueNode);
     void addActualArgumentNodeConnections(PDGNodeTy actualArgNode,
                                           unsigned argIdx,
@@ -101,13 +111,15 @@ private:
                                           const FunctionSet& callees);
     void addPhiNodeConnections(PDGNodeTy node);
 
+protected:
+    PDGType m_pdg;
+    FunctionPDGTy m_currentFPDG;
+
 private:
     llvm::Module* m_module;
     DefUseResultsTy m_defUse;
     IndCSResultsTy m_indCSResults;
     DominanceResultsTy m_domResults;
-    PDGType m_pdg;
-    FunctionPDGTy m_currentFPDG;
 }; // class PDGBuilder
 
 } // namespace pdg

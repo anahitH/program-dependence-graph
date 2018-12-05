@@ -90,7 +90,7 @@ void PDGBuilder::visitFormalArguments(FunctionPDG* functionPDG, llvm::Function* 
     for (auto arg_it = F->arg_begin();
             arg_it != F->arg_end();
             ++arg_it) {
-        functionPDG->addFormalArgNode(&*arg_it);
+        functionPDG->addFormalArgNode(&*arg_it, createFormalArgNodeFor(&*arg_it));
     }
     functionPDG->setFunctionDefBuilt(true);
 }
@@ -266,6 +266,36 @@ void PDGBuilder::visitInstruction(llvm::Instruction& I)
     }
 }
 
+PDGBuilder::PDGNodeTy PDGBuilder::createInstructionNodeFor(llvm::Instruction* instr)
+{
+    return std::make_shared<PDGLLVMInstructionNode>(instr);
+}
+
+PDGBuilder::PDGNodeTy PDGBuilder::createBasicBlockNodeFor(llvm::BasicBlock* block)
+{
+    return std::make_shared<PDGLLVMBasicBlockNode>(block);
+}
+
+PDGBuilder::PDGGlobalNodeTy PDGBuilder::createGlobalNodeFor(llvm::GlobalVariable* global)
+{
+    return std::make_shared<PDGLLVMGlobalVariableNode>(global);
+}
+
+PDGBuilder::ArgNodeTy PDGBuilder::createFormalArgNodeFor(llvm::Argument* arg)
+{
+    return std::make_shared<PDGLLVMFormalArgumentNode>(arg);
+}
+
+PDGBuilder::PDGNodeTy PDGBuilder::createNullNode()
+{
+    return std::make_shared<PDGNullNode>();
+}
+
+PDGBuilder::PDGNodeTy PDGBuilder::createConstantNodeFor(llvm::Constant* constant)
+{
+    return std::make_shared<PDGLLVMConstantNode>(constant);
+}
+
 void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
 {
     auto destNode = getInstructionNodeFor(callSite.getInstruction());
@@ -335,7 +365,7 @@ PDGBuilder::PDGNodeTy PDGBuilder::getInstructionNodeFor(llvm::Instruction* instr
     if (m_currentFPDG->hasNode(instr)) {
         return m_currentFPDG->getNode(instr);
     }
-    m_currentFPDG->addNode(instr, PDGNodeTy(new PDGLLVMInstructionNode(instr)));
+    m_currentFPDG->addNode(instr, createInstructionNodeFor(instr));
     return m_currentFPDG->getNode(instr);
 }
 
@@ -346,7 +376,7 @@ PDGBuilder::PDGNodeTy PDGBuilder::getNodeFor(llvm::Value* value)
     }
     if (auto* global = llvm::dyn_cast<llvm::GlobalVariable>(value)) {
         if (!m_pdg->hasGlobalVariableNode(global)) {
-            m_pdg->addGlobalVariableNode(global);
+            m_pdg->addGlobalVariableNode(global, createGlobalNodeFor(global));
         }
         return m_pdg->getGlobalVariableNode(global);
     }
@@ -355,11 +385,11 @@ PDGBuilder::PDGNodeTy PDGBuilder::getNodeFor(llvm::Value* value)
         return m_currentFPDG->getFormalArgNode(argument);
     }
     if (auto* nullValue = llvm::dyn_cast<llvm::ConstantPointerNull>(value)) {
-        m_currentFPDG->addNode(value, PDGNodeTy(new PDGNullNode()));
+        m_currentFPDG->addNode(value, createNullNode());
     } else if (auto* constant = llvm::dyn_cast<llvm::Constant>(value)) {
-        m_currentFPDG->addNode(value, PDGNodeTy(new PDGLLVMConstantNode(constant)));
+        m_currentFPDG->addNode(value, createConstantNodeFor(constant));
     } else if (auto* instr = llvm::dyn_cast<llvm::Instruction>(value)) {
-        m_currentFPDG->addNode(value, PDGNodeTy(new PDGLLVMInstructionNode(instr)));
+        m_currentFPDG->addNode(value, createInstructionNodeFor(instr));
     } else {
         // do not assert here for now to keep track of possible values to be handled here
         llvm::dbgs() << "Unhandled value " << *value << "\n";
@@ -371,7 +401,7 @@ PDGBuilder::PDGNodeTy PDGBuilder::getNodeFor(llvm::Value* value)
 PDGBuilder::PDGNodeTy PDGBuilder::getNodeFor(llvm::BasicBlock* block)
 {
     if (!m_currentFPDG->hasNode(block)) {
-        m_currentFPDG->addNode(block, PDGNodeTy(new PDGLLVMBasicBlockNode(block)));
+        m_currentFPDG->addNode(block, createBasicBlockNodeFor(block));
     }
     return m_currentFPDG->getNode(block);
 }
@@ -419,7 +449,7 @@ void PDGBuilder::addActualArgumentNodeConnections(PDGNodeTy actualArgNode,
                 continue;
             }
             if (!calleePDG->hasFormalArgNode(formalArg)) {
-                calleePDG->addFormalArgNode(formalArg);
+                calleePDG->addFormalArgNode(formalArg, createFormalArgNodeFor(formalArg));
             }
             formalArgNode = calleePDG->getFormalArgNode(formalArg);
         }
