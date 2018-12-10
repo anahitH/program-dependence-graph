@@ -1,8 +1,5 @@
 #pragma once
 
-#include "PDG.h"
-#include "FunctionPDG.h"
-
 #include "llvm/IR/InstVisitor.h"
 
 #include <memory>
@@ -22,6 +19,9 @@ class Value;
 
 namespace pdg {
 
+class PDG;
+class PDGNode;
+class FunctionPDG;
 class DefUseResults;
 class DominanceResults;
 class IndirectCallSiteResults;
@@ -30,13 +30,11 @@ class PDGBuilder : public llvm::InstVisitor<PDGBuilder>
 {
 public:
     using PDGType = std::shared_ptr<PDG>;
-    using PDGGlobalNodeTy = std::shared_ptr<PDGLLVMGlobalVariableNode>;
-    using ArgNodeTy = std::shared_ptr<PDGLLVMFormalArgumentNode>;
-    using FunctionPDGTy = PDG::FunctionPDGTy;
+    using FunctionPDGTy = std::shared_ptr<FunctionPDG>;
     using DefUseResultsTy = std::shared_ptr<DefUseResults>;
     using IndCSResultsTy = std::shared_ptr<IndirectCallSiteResults>;
     using DominanceResultsTy = std::shared_ptr<DominanceResults>;
-    using PDGNodeTy = FunctionPDG::PDGNodeTy;
+    using PDGNodeTy = std::shared_ptr<PDGNode>;
     using FunctionSet = std::unordered_set<llvm::Function*>;
 
 public:
@@ -85,8 +83,8 @@ public:
 protected:
     virtual PDGNodeTy createInstructionNodeFor(llvm::Instruction* instr);
     virtual PDGNodeTy createBasicBlockNodeFor(llvm::BasicBlock* block);
-    virtual PDGGlobalNodeTy createGlobalNodeFor(llvm::GlobalVariable* global);
-    virtual ArgNodeTy createFormalArgNodeFor(llvm::Argument* arg);
+    virtual PDGNodeTy createGlobalNodeFor(llvm::GlobalVariable* global);
+    virtual PDGNodeTy createFormalArgNodeFor(llvm::Argument* arg);
     virtual PDGNodeTy createNullNode();
     virtual PDGNodeTy createConstantNodeFor(llvm::Constant* constant);
 

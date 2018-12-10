@@ -1,5 +1,7 @@
 #include "PDG/PDGBuilder.h"
 
+#include "PDG/PDG.h"
+#include "PDG/FunctionPDG.h"
 #include "PDG/PDGEdge.h"
 #include "PDG/DefUseResults.h"
 #include "PDG/DominanceResults.h"
@@ -276,12 +278,12 @@ PDGBuilder::PDGNodeTy PDGBuilder::createBasicBlockNodeFor(llvm::BasicBlock* bloc
     return std::make_shared<PDGLLVMBasicBlockNode>(block);
 }
 
-PDGBuilder::PDGGlobalNodeTy PDGBuilder::createGlobalNodeFor(llvm::GlobalVariable* global)
+PDGBuilder::PDGNodeTy PDGBuilder::createGlobalNodeFor(llvm::GlobalVariable* global)
 {
     return std::make_shared<PDGLLVMGlobalVariableNode>(global);
 }
 
-PDGBuilder::ArgNodeTy PDGBuilder::createFormalArgNodeFor(llvm::Argument* arg)
+PDGBuilder::PDGNodeTy PDGBuilder::createFormalArgNodeFor(llvm::Argument* arg)
 {
     return std::make_shared<PDGLLVMFormalArgumentNode>(arg);
 }

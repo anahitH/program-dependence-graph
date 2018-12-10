@@ -3,6 +3,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include "PDGLLVMNode.h"
+
 namespace llvm {
 
 class Module;
@@ -21,9 +23,9 @@ class PDG
 {
 public:
     // TODO: consider collecting all nodes in one map with Value key
-    using PDGGlobalNodeTy = std::shared_ptr<PDGLLVMGlobalVariableNode>;
+    using PDGNodeTy = std::shared_ptr<PDGNode>;
     using PDGFunctionNodeTy = std::shared_ptr<PDGLLVMFunctionNode>;
-    using GlobalVariableNodes = std::unordered_map<llvm::GlobalVariable*, PDGGlobalNodeTy>;
+    using GlobalVariableNodes = std::unordered_map<llvm::GlobalVariable*, PDGNodeTy>;
     using FunctionNodes = std::unordered_map<llvm::Function*, PDGFunctionNodeTy>;
     using FunctionPDGTy = std::shared_ptr<FunctionPDG>;
     using FunctionPDGs = std::unordered_map<llvm::Function*, FunctionPDGTy>;
@@ -91,10 +93,10 @@ public:
         return m_functionPDGs.find(F) != m_functionPDGs.end();
     }
 
-    PDGGlobalNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable);
+    PDGNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable);
     PDGFunctionNodeTy getFunctionNode(llvm::Function* function);
 
-    const PDGGlobalNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable) const
+    const PDGNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable) const
     {
         return const_cast<PDG*>(this)->getGlobalVariableNode(variable);
     }
@@ -105,7 +107,7 @@ public:
         return const_cast<PDG*>(this)->getFunctionPDG(F);
     }
 
-    bool addGlobalVariableNode(llvm::GlobalVariable* variable, PDGGlobalNodeTy node)
+    bool addGlobalVariableNode(llvm::GlobalVariable* variable, PDGNodeTy node)
     {
         return m_globalVariableNodes.insert(std::make_pair(variable, node)).second;
     }

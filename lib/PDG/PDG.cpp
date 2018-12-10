@@ -1,7 +1,5 @@
 #include "PDG/PDG.h"
 
-#include "PDG/PDGLLVMNode.h"
-
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -12,7 +10,7 @@
 
 namespace pdg {
 
-PDG::PDGGlobalNodeTy PDG::getGlobalVariableNode(llvm::GlobalVariable* variable)
+PDG::PDGNodeTy PDG::getGlobalVariableNode(llvm::GlobalVariable* variable)
 {
     assert(hasGlobalVariableNode(variable));
     return m_globalVariableNodes.find(variable)->second;
@@ -35,7 +33,7 @@ bool PDG::addGlobalVariableNode(llvm::GlobalVariable* variable)
     if (hasGlobalVariableNode(variable)) {
         return false;
     }
-    m_globalVariableNodes.insert(std::make_pair(variable, PDGGlobalNodeTy(new PDGLLVMGlobalVariableNode(variable))));
+    m_globalVariableNodes.insert(std::make_pair(variable, PDGNodeTy(new PDGLLVMGlobalVariableNode(variable))));
     return true;
 }
 

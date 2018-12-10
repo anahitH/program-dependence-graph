@@ -2,10 +2,11 @@
 
 #include "llvm/Pass.h"
 
-#include "PDG/PDG/PDG.h"
 #include <memory>
 
 namespace pdg {
+
+class PDG;
 
 /// LLVM pass to build PDG from SVFG
 class SVFGPDGBuilder : public llvm::ModulePass

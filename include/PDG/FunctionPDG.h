@@ -10,9 +10,8 @@ namespace pdg {
 class FunctionPDG
 {
 public:
-    using ArgNodeTy = std::shared_ptr<PDGLLVMFormalArgumentNode>;
     using PDGNodeTy = std::shared_ptr<PDGNode>;
-    using PDGLLVMArgumentNodes = std::unordered_map<llvm::Argument*, ArgNodeTy>;
+    using PDGLLVMArgumentNodes = std::unordered_map<llvm::Argument*, PDGNodeTy>;
     using PDGLLVMNodes = std::unordered_map<llvm::Value*, PDGNodeTy>;
     using PDGNodes = std::vector<PDGNode*>;
     using arg_iterator = PDGLLVMArgumentNodes::iterator;
@@ -85,12 +84,12 @@ public:
         return m_functionLLVMNodes.find(value) != m_functionLLVMNodes.end();
     }
 
-    ArgNodeTy getFormalArgNode(llvm::Argument* arg)
+    PDGNodeTy getFormalArgNode(llvm::Argument* arg)
     {
         assert(hasFormalArgNode(arg));
         return m_formalArgNodes.find(arg)->second;
     }
-    const ArgNodeTy getFormalArgNode(llvm::Argument* arg) const
+    const PDGNodeTy getFormalArgNode(llvm::Argument* arg) const
     {
         return const_cast<FunctionPDG*>(this)->getFormalArgNode(arg);
     }
@@ -105,7 +104,7 @@ public:
         return const_cast<FunctionPDG*>(this)->getNode(val);
     }
 
-    bool addFormalArgNode(llvm::Argument* arg, ArgNodeTy argNode)
+    bool addFormalArgNode(llvm::Argument* arg, PDGNodeTy argNode)
     {
         auto res = m_formalArgNodes.insert(std::make_pair(arg, argNode));
         if (res.second) {
@@ -118,7 +117,7 @@ public:
         if (hasFormalArgNode(arg)) {
             return false;
         }
-        auto res = m_formalArgNodes.insert(std::make_pair(arg, ArgNodeTy(new PDGLLVMFormalArgumentNode(arg))));
+        auto res = m_formalArgNodes.insert(std::make_pair(arg, PDGNodeTy(new PDGLLVMFormalArgumentNode(arg))));
         assert(res.second);
         m_functionNodes.push_back(res.first->second.get());
         return true;
