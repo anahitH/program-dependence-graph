@@ -16,7 +16,7 @@ PDG::PDGNodeTy PDG::getGlobalVariableNode(llvm::GlobalVariable* variable)
     return m_globalVariableNodes.find(variable)->second;
 }
 
-PDG::PDGFunctionNodeTy PDG::getFunctionNode(llvm::Function* function)
+PDG::PDGFunctionNodeTy PDG::getFunctionNode(llvm::Function* function) const
 {
     assert(hasFunctionNode(function));
     return m_functionNodes.find(function)->second;

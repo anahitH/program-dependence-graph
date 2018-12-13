@@ -94,7 +94,7 @@ public:
     }
 
     PDGNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable);
-    PDGFunctionNodeTy getFunctionNode(llvm::Function* function);
+    PDGFunctionNodeTy getFunctionNode(llvm::Function* function) const;
 
     const PDGNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable) const
     {
