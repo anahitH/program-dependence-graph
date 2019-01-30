@@ -74,6 +74,9 @@ void PDGBuilder::buildFunctionPDG(llvm::Function* F)
 {
     if (!m_pdg->hasFunctionPDG(F)) {
         m_currentFPDG.reset(new FunctionPDG(F));
+        if (F->isVarArg()) {
+            m_currentFPDG->setVaArgNode(createVaArgNodeFor(F));
+        }
         m_pdg->addFunctionPDG(F, m_currentFPDG);
     } else {
         m_currentFPDG = m_pdg->getFunctionPDG(F);
@@ -310,6 +313,11 @@ PDGBuilder::PDGNodeTy PDGBuilder::createNullNode()
 PDGBuilder::PDGNodeTy PDGBuilder::createConstantNodeFor(llvm::Constant* constant)
 {
     return std::make_shared<PDGLLVMConstantNode>(constant);
+}
+
+PDGBuilder::PDGNodeTy PDGBuilder::createVaArgNodeFor(llvm::Function* F)
+{
+    return std::make_shared<PDGLLVMVaArgNode>(F);
 }
 
 void PDGBuilder::visitCallSite(llvm::CallSite& callSite)

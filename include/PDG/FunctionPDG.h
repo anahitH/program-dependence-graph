@@ -27,9 +27,6 @@ public:
         : m_function(F)
         , m_functionDefinitionBuilt(false)
     {
-        if (F->isVarArg()) {
-            m_vaArgNode.reset(new PDGLLVMVaArgNode(F));
-        }
     }
 
     ~FunctionPDG() = default;
@@ -73,6 +70,11 @@ public:
     const PDGNodeTy getVaArgNode() const
     {
         return m_vaArgNode;
+    }
+
+    void setVaArgNode(PDGNodeTy node)
+    {
+        m_vaArgNode = node;
     }
 
     bool hasFormalArgNode(llvm::Argument* arg) const

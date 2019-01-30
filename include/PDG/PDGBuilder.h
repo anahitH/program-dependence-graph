@@ -91,6 +91,7 @@ protected:
                                                unsigned idx);
     virtual PDGNodeTy createNullNode();
     virtual PDGNodeTy createConstantNodeFor(llvm::Constant* constant);
+    virtual PDGNodeTy createVaArgNodeFor(llvm::Function* F);
 
 private:
     void buildFunctionPDG(llvm::Function* F);
