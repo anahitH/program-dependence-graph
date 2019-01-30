@@ -100,7 +100,7 @@ void PDGBuilder::visitFormalArguments(FunctionPDG* functionPDG, llvm::Function* 
 void PDGBuilder::visitBlock(llvm::BasicBlock& B)
 {
     m_currentFPDG->addNode(llvm::dyn_cast<llvm::Value>(&B),
-            PDGNodeTy(new PDGLLVMBasicBlockNode(&B)));
+            createBasicBlockNodeFor(&B));
 }
 
 void PDGBuilder::visitBlockInstructions(llvm::BasicBlock& B)
@@ -148,7 +148,7 @@ void PDGBuilder::visitLoadInst(llvm::LoadInst& I)
 {
     // TODO: output this for debug mode only
     //llvm::dbgs() << "Load Inst: " << I << "\n";
-    auto destNode = PDGNodeTy(new PDGLLVMInstructionNode(&I));
+    auto destNode = createInstructionNodeFor(&I);
     m_currentFPDG->addNode(&I, destNode);
     connectToDefSite(&I, destNode);
 }
