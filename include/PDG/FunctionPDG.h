@@ -235,6 +235,8 @@ private:
     PDGLLVMArgumentNodes m_formalArgNodes;
     PDGNodeTy m_vaArgNode;
     // TODO: formal ins, formal outs? formal vaargs?
+    // TODO: think if these two containers are needed?
+    // they contain almost the same information
     PDGLLVMNodes m_functionLLVMNodes;
     PDGNodes m_functionNodes;
     CallSites m_callSites;

@@ -16,7 +16,7 @@ PDG::PDGNodeTy PDG::getGlobalVariableNode(llvm::GlobalVariable* variable)
     return m_globalVariableNodes.find(variable)->second;
 }
 
-PDG::PDGFunctionNodeTy PDG::getFunctionNode(llvm::Function* function) const
+PDG::PDGNodeTy PDG::getFunctionNode(llvm::Function* function) const
 {
     assert(hasFunctionNode(function));
     return m_functionNodes.find(function)->second;
@@ -42,7 +42,7 @@ bool PDG::addFunctionNode(llvm::Function* function)
     if (hasFunctionNode(function)) {
         return false;
     }
-    m_functionNodes.insert(std::make_pair(function, PDGFunctionNodeTy(new PDGLLVMFunctionNode(function))));
+    m_functionNodes.insert(std::make_pair(function, PDGNodeTy(new PDGLLVMFunctionNode(function))));
     return true;
 }
 

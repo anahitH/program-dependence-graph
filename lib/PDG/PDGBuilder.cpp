@@ -44,7 +44,7 @@ void PDGBuilder::build()
     visitGlobals();
 
     for (auto& F : *m_module) {
-        m_pdg->addFunctionNode(&F);
+        m_pdg->addFunctionNode(&F, createFunctionNodeFor(&F));
         if (F.isDeclaration()) {
             buildFunctionDefinition(&F);
             continue;
@@ -162,8 +162,10 @@ void PDGBuilder::visitStoreInst(llvm::StoreInst& I)
     if (!sourceNode) {
         return;
     }
-    auto destNode = PDGNodeTy(new PDGLLVMInstructionNode(&I));
+    auto destNode = getInstructionNodeFor(&I);
+    auto ptrOp = getNodeFor(I.getPointerOperand());
     addDataEdge(sourceNode, destNode);
+    addDataEdge(ptrOp, destNode);
     m_currentFPDG->addNode(&I, destNode);
 }
 
@@ -278,6 +280,11 @@ PDGBuilder::PDGNodeTy PDGBuilder::createBasicBlockNodeFor(llvm::BasicBlock* bloc
     return std::make_shared<PDGLLVMBasicBlockNode>(block);
 }
 
+PDGBuilder::PDGNodeTy PDGBuilder::createFunctionNodeFor(llvm::Function* F)
+{
+    return std::make_shared<PDGLLVMFunctionNode>(F);
+}
+
 PDGBuilder::PDGNodeTy PDGBuilder::createGlobalNodeFor(llvm::GlobalVariable* global)
 {
     return std::make_shared<PDGLLVMGlobalVariableNode>(global);
@@ -286,6 +293,13 @@ PDGBuilder::PDGNodeTy PDGBuilder::createGlobalNodeFor(llvm::GlobalVariable* glob
 PDGBuilder::PDGNodeTy PDGBuilder::createFormalArgNodeFor(llvm::Argument* arg)
 {
     return std::make_shared<PDGLLVMFormalArgumentNode>(arg);
+}
+
+PDGBuilder::PDGNodeTy PDGBuilder::createActualArgumentNode(llvm::CallSite& callSite,
+                                                           llvm::Value* arg,
+                                                           unsigned idx)
+{
+    return std::make_shared<PDGLLVMActualArgumentNode>(callSite, arg, idx);
 }
 
 PDGBuilder::PDGNodeTy PDGBuilder::createNullNode()
@@ -311,7 +325,7 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
     }
     for (auto callee : callees) {
         if (!m_pdg->hasFunctionNode(callee)) {
-            m_pdg->addFunctionNode(callee);
+            m_pdg->addFunctionNode(callee, createFunctionNodeFor(callee));
         }
         auto calleeNode = m_pdg->getFunctionNode(callee);
         if (!callSite.getFunctionType()->isVoidTy()) {
@@ -331,7 +345,7 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
                 //llvm::dbgs() << *val << "\n";
                 connectToDefSite(val, sourceNode);
             }
-            auto actualArgNode = PDGNodeTy(new PDGLLVMActualArgumentNode(callSite, val, i));
+            auto actualArgNode = createActualArgumentNode(callSite, val, i);
             addDataEdge(sourceNode, actualArgNode);
             addDataEdge(actualArgNode, destNode);
             m_currentFPDG->addNode(actualArgNode);

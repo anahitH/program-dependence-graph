@@ -26,7 +26,7 @@ public:
     using PDGNodeTy = std::shared_ptr<PDGNode>;
     using PDGFunctionNodeTy = std::shared_ptr<PDGLLVMFunctionNode>;
     using GlobalVariableNodes = std::unordered_map<llvm::GlobalVariable*, PDGNodeTy>;
-    using FunctionNodes = std::unordered_map<llvm::Function*, PDGFunctionNodeTy>;
+    using FunctionNodes = std::unordered_map<llvm::Function*, PDGNodeTy>;
     using FunctionPDGTy = std::shared_ptr<FunctionPDG>;
     using FunctionPDGs = std::unordered_map<llvm::Function*, FunctionPDGTy>;
 
@@ -94,7 +94,7 @@ public:
     }
 
     PDGNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable);
-    PDGFunctionNodeTy getFunctionNode(llvm::Function* function) const;
+    PDGNodeTy getFunctionNode(llvm::Function* function) const;
 
     const PDGNodeTy getGlobalVariableNode(llvm::GlobalVariable* variable) const
     {
@@ -113,7 +113,7 @@ public:
     }
 
     bool addGlobalVariableNode(llvm::GlobalVariable* variable);
-    bool addFunctionNode(llvm::Function* function, PDGFunctionNodeTy node)
+    bool addFunctionNode(llvm::Function* function, PDGNodeTy node)
     {
         return m_functionNodes.insert(std::make_pair(function, node)).second;
     }

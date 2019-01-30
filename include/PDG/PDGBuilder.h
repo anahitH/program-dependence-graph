@@ -83,8 +83,12 @@ public:
 protected:
     virtual PDGNodeTy createInstructionNodeFor(llvm::Instruction* instr);
     virtual PDGNodeTy createBasicBlockNodeFor(llvm::BasicBlock* block);
+    virtual PDGNodeTy createFunctionNodeFor(llvm::Function* F);
     virtual PDGNodeTy createGlobalNodeFor(llvm::GlobalVariable* global);
     virtual PDGNodeTy createFormalArgNodeFor(llvm::Argument* arg);
+    virtual PDGNodeTy createActualArgumentNode(llvm::CallSite& callSite,
+                                               llvm::Value* arg,
+                                               unsigned idx);
     virtual PDGNodeTy createNullNode();
     virtual PDGNodeTy createConstantNodeFor(llvm::Constant* constant);
 
