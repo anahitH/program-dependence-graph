@@ -252,10 +252,12 @@ void PDGBuilder::visitTerminatorInst(llvm::TerminatorInst& I)
 void PDGBuilder::visitReturnInst(llvm::ReturnInst& I)
 {
     if (!I.getReturnValue()) {
+        getInstructionNodeFor(&I);
         return;
     }
     auto returnType = I.getReturnValue()->getType();
     if (returnType->isVoidTy()) {
+        getInstructionNodeFor(&I);
         return;
     }
     auto sourceNode = getInstructionNodeFor(&I);
