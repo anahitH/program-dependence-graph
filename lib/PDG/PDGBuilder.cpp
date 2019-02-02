@@ -322,6 +322,12 @@ PDGBuilder::PDGNodeTy PDGBuilder::createVaArgNodeFor(llvm::Function* F)
     return std::make_shared<PDGLLVMVaArgNode>(F);
 }
 
+PDGBuilder::PDGNodeTy PDGBuilder::createPhiNode(const std::vector<llvm::Value*>& values,
+                                                const std::vector<llvm::BasicBlock*>& blocks)
+{
+    return std::make_shared<PDGPhiNode>(values, blocks);
+}
+
 void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
 {
     auto destNode = getInstructionNodeFor(callSite.getInstruction());
@@ -437,12 +443,13 @@ void PDGBuilder::connectToDefSite(llvm::Value* value, PDGNodeTy valueNode)
     const auto& defSite = m_defUse->getDefNode(value);
     auto* defInst = defSite.first;
     auto sourceNode = defSite.second;
+    PDGNodeTy pdgNode;
     if (!defInst || !m_currentFPDG->hasNode(defInst)) {
         if (sourceNode) {
             if (defInst) {
                 m_currentFPDG->addNode(defInst, sourceNode);
             } else {
-                addPhiNodeConnections(sourceNode);
+                sourceNode = addPhiNodeConnections(sourceNode);
             }
         }
     } else {
@@ -485,18 +492,20 @@ void PDGBuilder::addActualArgumentNodeConnections(PDGNodeTy actualArgNode,
     }
 }
 
-void PDGBuilder::addPhiNodeConnections(PDGNodeTy node)
+PDGBuilder::PDGNodeTy PDGBuilder::addPhiNodeConnections(PDGNodeTy node)
 {
     PDGPhiNode* phiNode = llvm::dyn_cast<PDGPhiNode>(node.get());
     if (!phiNode) {
-        return;
+        return node;
     }
-    m_currentFPDG->addNode(node);
+    auto pdgNode = createPhiNode(phiNode->getValues(), phiNode->getBlocks());
+    m_currentFPDG->addNode(pdgNode);
     for (unsigned i = 0; i < phiNode->getNumValues(); ++i) {
         llvm::Value* value = phiNode->getValue(i);
         auto destNode = getNodeFor(value);
-        addDataEdge(destNode, node);
+        addDataEdge(destNode, pdgNode);
     }
+    return pdgNode;
 }
 
 } // namespace pdg

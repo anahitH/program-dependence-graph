@@ -378,6 +378,16 @@ public:
     virtual std::string getNodeAsString() const override;
 
 public:
+    const Values& getValues() const
+    {
+        return m_values;
+    }
+
+    const Blocks& getBlocks() const
+    {
+        return m_blocks;
+    }
+
     unsigned getNumValues() const
     {
         return m_values.size();

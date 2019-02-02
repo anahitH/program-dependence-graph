@@ -30,6 +30,9 @@ public:
     using FunctionPDGTy = std::shared_ptr<FunctionPDG>;
     using FunctionPDGs = std::unordered_map<llvm::Function*, FunctionPDGTy>;
 
+    using iterator = FunctionPDGs::iterator;
+    using const_iterator = FunctionPDGs::const_iterator;
+
 public:
     explicit PDG(llvm::Module* M)
         : m_module(M)
@@ -123,6 +126,27 @@ public:
     bool addFunctionPDG(llvm::Function* F, FunctionPDGTy functionPDG)
     {
         return m_functionPDGs.insert(std::make_pair(F, functionPDG)).second;
+    }
+
+public:
+    iterator begin()
+    {
+        return m_functionPDGs.begin();
+    }
+
+    iterator end()
+    {
+        return m_functionPDGs.end();
+    }
+
+    const_iterator begin() const
+    {
+        return m_functionPDGs.begin();
+    }
+
+    const_iterator end() const
+    {
+        return m_functionPDGs.end();
     }
 
 private:

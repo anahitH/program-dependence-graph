@@ -3,15 +3,17 @@
 #include "llvm/IR/InstVisitor.h"
 
 #include <memory>
+#include <vector>
 #include <unordered_set>
 #include <functional>
 
 namespace llvm {
 
+class BasicBlock;
 class CallSite;
+class Function;
 class MemorySSA;
 class Module;
-class Function;
 class Value;
 
 }
@@ -92,6 +94,8 @@ protected:
     virtual PDGNodeTy createNullNode();
     virtual PDGNodeTy createConstantNodeFor(llvm::Constant* constant);
     virtual PDGNodeTy createVaArgNodeFor(llvm::Function* F);
+    virtual PDGNodeTy createPhiNode(const std::vector<llvm::Value*>& values,
+                                    const std::vector<llvm::BasicBlock*>& blocks);
 
 private:
     void buildFunctionPDG(llvm::Function* F);
@@ -112,7 +116,7 @@ private:
                                           unsigned argIdx,
                                           const llvm::CallSite& cs,
                                           const FunctionSet& callees);
-    void addPhiNodeConnections(PDGNodeTy node);
+    PDGBuilder::PDGNodeTy addPhiNodeConnections(PDGNodeTy node);
 
 protected:
     PDGType m_pdg;
