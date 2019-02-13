@@ -3,6 +3,12 @@
 #include <memory>
 #include <unordered_set>
 
+namespace llvm {
+
+class Function;
+
+}
+
 namespace pdg {
 
 class PDGEdge;
@@ -27,6 +33,8 @@ public:
 public:
     virtual unsigned getNodeType() const = 0;
     virtual std::string getNodeAsString() const = 0;
+    virtual bool hasParent() const = 0;
+    virtual llvm::Function* getParent() const = 0;
 
 public:
     const PDGEdges& getInEdges() const

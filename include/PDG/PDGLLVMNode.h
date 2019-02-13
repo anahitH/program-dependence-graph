@@ -65,7 +65,7 @@ public:
         return isLLVMNodeType((NodeType) node->getNodeType());
     }
 
-private:
+protected:
     llvm::Value* m_value;
     NodeType m_type;
 }; // class PDGLLVMNode
@@ -79,6 +79,16 @@ public:
     }
 
 public:
+    bool hasParent() const override
+    {
+        return true;
+    }
+
+    llvm::Function* getParent() const override
+    {
+        return llvm::dyn_cast<llvm::Instruction>(m_value)->getFunction();
+    }
+
     static bool classof(const PDGLLVMNode* node)
     {
         return node->getNodeType() == NodeType::InstructionNode;
@@ -102,6 +112,16 @@ public:
 
 public:
     llvm::Function* getFunction() const
+    {
+        return m_function;
+    }
+
+    bool hasParent() const override
+    {
+        return true;
+    }
+
+    llvm::Function* getParent() const override
     {
         return m_function;
     }
@@ -134,6 +154,16 @@ public:
     virtual std::string getNodeAsString() const override;
 
     llvm::Function* getFunction() const
+    {
+        return m_function;
+    }
+
+    bool hasParent() const override
+    {
+        return true;
+    }
+
+    llvm::Function* getParent() const override
     {
         return m_function;
     }
@@ -176,6 +206,16 @@ public:
         return m_argIdx;
     }
 
+    bool hasParent() const override
+    {
+        return true;
+    }
+
+    llvm::Function* getParent() const override
+    {
+        return m_callSite.getCaller();
+    }
+
 public:
     static bool classof(const PDGLLVMNode* node)
     {
@@ -202,6 +242,16 @@ public:
     }
 
 public:
+    bool hasParent() const override
+    {
+        return false;
+    }
+
+    llvm::Function* getParent() const override
+    {
+        return nullptr;
+    }
+
     static bool classof(const PDGLLVMNode* node)
     {
         return node->getNodeType() == NodeType::GlobalVariableNode;
@@ -222,6 +272,21 @@ public:
     }
 
 public:
+    bool hasParent() const override
+    {
+        return getParent() != nullptr;
+    }
+
+    llvm::Function* getParent() const override
+    {
+        for (auto it = m_value->use_begin(); it != m_value->use_end(); ++it) {
+            if (auto* instr = llvm::dyn_cast<llvm::Instruction>(*it)) {
+                return instr->getFunction();
+            }
+        }
+        return nullptr;
+    }
+
     static bool classof(const PDGLLVMNode* node)
     {
         return node->getNodeType() == NodeType::ConstantExprNode;
@@ -247,6 +312,16 @@ public:
     }
 
 public:
+    bool hasParent() const override
+    {
+        return false;
+    }
+
+    llvm::Function* getParent() const override
+    {
+        return nullptr;
+    }
+
     static bool classof(const PDGLLVMNode* node)
     {
         return node->getNodeType() == NodeType::ConstantNode;
@@ -274,6 +349,16 @@ public:
     }
 
     llvm::Function* getFunction() const
+    {
+        return m_function;
+    }
+
+    bool hasParent() const override
+    {
+        return true;
+    }
+
+    llvm::Function* getParent() const override
     {
         return m_function;
     }
@@ -313,6 +398,16 @@ public:
         return m_block;
     }
 
+    bool hasParent() const override
+    {
+        return true;
+    }
+
+    llvm::Function* getParent() const override
+    {
+        return m_block->getParent();
+    }
+
 public:
     static bool classof(const PDGLLVMNode* node)
     {
@@ -347,6 +442,16 @@ public:
         return "Null";
     }
 
+    bool hasParent() const override
+    {
+        return false;
+    }
+
+    llvm::Function* getParent() const override
+    {
+        return nullptr;
+    }
+
 public:
     static bool classof(const PDGLLVMNode* node)
     {
@@ -376,6 +481,16 @@ public:
 
 public:
     virtual std::string getNodeAsString() const override;
+
+    bool hasParent() const override
+    {
+        return !m_blocks.empty();
+    }
+
+    llvm::Function* getParent() const override
+    {
+        return m_blocks.empty() ? nullptr : m_blocks.front()->getParent();
+    }
 
 public:
     unsigned getNumValues() const

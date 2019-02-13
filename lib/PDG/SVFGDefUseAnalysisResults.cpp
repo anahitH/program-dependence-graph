@@ -261,7 +261,7 @@ std::unordered_set<SVFGNode*> SVFGDefUseAnalysisResults::getSVFGDefNodes(SVFGNod
             //printNodeType(srcNode);
             // TODO: what other node kinds can be added here?
         } else {
-            printNodeType(srcNode);
+            //printNodeType(srcNode);
         }
     }
     return defNodes;
