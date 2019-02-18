@@ -180,6 +180,7 @@ void getValuesAndBlocks(SVFGNode* svfgNode,
             blocks.push_back(const_cast<llvm::BasicBlock*>(svfgNode->getBB()));
         }
     } else if (auto* formalInNode = llvm::dyn_cast<FormalINSVFGNode>(svfgNode)) {
+        getValuesAndBlocks(formalInNode->getEntryChi()->getOpVer()->getDef(), processed_defs, values, blocks);
         // TODO:
     } else if (auto* formalOutNode = llvm::dyn_cast<FormalOUTSVFGNode>(svfgNode)) {
         getValuesAndBlocks(formalOutNode->getRetMU()->getVer()->getDef(), processed_defs, values, blocks);
@@ -249,6 +250,11 @@ std::unordered_set<SVFGNode*> SVFGDefUseAnalysisResults::getSVFGDefNodes(SVFGNod
     std::unordered_set<SVFGNode*> defNodes;
     for (auto inedge_it = svfgNode->InEdgeBegin(); inedge_it != svfgNode->InEdgeEnd(); ++inedge_it) {
         SVFGNode* srcNode = (*inedge_it)->getSrcNode();
+        if (auto* fin = llvm::dyn_cast<FormalINSVFGNode>(srcNode)) {
+            const auto& formaInDefs = getSVFGDefNodes(srcNode);
+            defNodes.insert(formaInDefs.begin(), formaInDefs.end());
+            continue;
+        }
         if (srcNode->getNodeKind() == SVFGNode::Copy
             || srcNode->getNodeKind() == SVFGNode::Store
             || srcNode->getNodeKind() == SVFGNode::MPhi

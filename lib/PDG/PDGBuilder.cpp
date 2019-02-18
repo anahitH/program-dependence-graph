@@ -149,6 +149,8 @@ void PDGBuilder::visitLoadInst(llvm::LoadInst& I)
     // TODO: output this for debug mode only
     //llvm::dbgs() << "Load Inst: " << I << "\n";
     auto destNode = PDGNodeTy(new PDGLLVMInstructionNode(&I));
+    auto ptrOp = getNodeFor(I.getPointerOperand());
+    addDataEdge(ptrOp, destNode);
     m_currentFPDG->addNode(&I, destNode);
     connectToDefSite(&I, destNode);
 }
@@ -163,7 +165,9 @@ void PDGBuilder::visitStoreInst(llvm::StoreInst& I)
         return;
     }
     auto destNode = PDGNodeTy(new PDGLLVMInstructionNode(&I));
+    auto ptrOp = getNodeFor(I.getPointerOperand());
     addDataEdge(sourceNode, destNode);
+    addDataEdge(ptrOp, destNode);
     m_currentFPDG->addNode(&I, destNode);
 }
 
