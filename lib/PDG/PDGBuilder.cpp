@@ -377,6 +377,10 @@ PDGBuilder::PDGNodeTy PDGBuilder::getInstructionNodeFor(llvm::Instruction* instr
 
 PDGBuilder::PDGNodeTy PDGBuilder::getNodeFor(llvm::Value* value)
 {
+    assert(value);
+    if (!value) {
+        return nullptr;
+    }
     if (m_currentFPDG->hasNode(value)) {
         return m_currentFPDG->getNode(value);
     }
@@ -474,6 +478,10 @@ void PDGBuilder::addPhiNodeConnections(PDGNodeTy node)
     m_currentFPDG->addNode(node);
     for (unsigned i = 0; i < phiNode->getNumValues(); ++i) {
         llvm::Value* value = phiNode->getValue(i);
+        if (!value) {
+            // TODO :check why null gets here
+            continue;
+        }
         auto destNode = getNodeFor(value);
         addDataEdge(destNode, node);
     }

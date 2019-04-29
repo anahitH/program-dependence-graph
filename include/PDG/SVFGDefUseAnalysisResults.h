@@ -25,7 +25,7 @@ public:
 
 private:
     SVFGNode* getSVFGNode(llvm::Value* value);
-    std::unordered_set<SVFGNode*> getSVFGDefNodes(SVFGNode* svfgNode);
+    std::unordered_set<SVFGNode*> getSVFGDefNodes(SVFGNode* svfgNode, std::unordered_set<SVFGNode*>& processedNodes);
     DefSite getPdgDefNode(const std::unordered_set<SVFGNode*>& svfgDefNodes);
     PDGNodeTy getNode(SVFGNode* svfgNode);
 

@@ -218,7 +218,9 @@ DefUseResults::DefSite SVFGDefUseAnalysisResults::getDefNode(llvm::Value* value)
         m_valueDefSite.insert(std::make_pair(value, nulldefSite));
         return nulldefSite;
     }
-    const auto& svfgDefNodes = getSVFGDefNodes(valueSvfgNode);
+    std::unordered_set<SVFGNode*> processedNodes;
+    const auto& svfgDefNodes = getSVFGDefNodes(valueSvfgNode, processedNodes);
+    processedNodes.clear();
     auto defNode = getPdgDefNode(svfgDefNodes);
     m_valueDefSite.insert(std::make_pair(value, defNode));
     return defNode;
@@ -245,13 +247,16 @@ SVFGNode* SVFGDefUseAnalysisResults::getSVFGNode(llvm::Value* value)
     return const_cast<SVFGNode*>(m_svfg->getDefSVFGNode(pagNode));
 }
 
-std::unordered_set<SVFGNode*> SVFGDefUseAnalysisResults::getSVFGDefNodes(SVFGNode* svfgNode)
+std::unordered_set<SVFGNode*> SVFGDefUseAnalysisResults::getSVFGDefNodes(SVFGNode* svfgNode, std::unordered_set<SVFGNode*>& processedNodes)
 {
     std::unordered_set<SVFGNode*> defNodes;
+    if (!processedNodes.insert(svfgNode).second) {
+        return defNodes;
+    }
     for (auto inedge_it = svfgNode->InEdgeBegin(); inedge_it != svfgNode->InEdgeEnd(); ++inedge_it) {
         SVFGNode* srcNode = (*inedge_it)->getSrcNode();
         if (auto* fin = llvm::dyn_cast<FormalINSVFGNode>(srcNode)) {
-            const auto& formaInDefs = getSVFGDefNodes(srcNode);
+            const auto& formaInDefs = getSVFGDefNodes(srcNode, processedNodes);
             defNodes.insert(formaInDefs.begin(), formaInDefs.end());
             continue;
         }
