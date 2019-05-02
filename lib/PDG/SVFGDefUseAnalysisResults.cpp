@@ -92,8 +92,12 @@ void getValuesAndBlocks(MSSADEF* def,
         // TODO:
     } else if (def->getType() == MSSADEF::StoreMSSACHI) {
         auto* storeChi = llvm::dyn_cast<SVFG::STORECHI>(def);
-        values.push_back(const_cast<llvm::Instruction*>(storeChi->getStoreInst()->getInst()));
-        blocks.push_back(const_cast<llvm::BasicBlock*>(storeChi->getBasicBlock()));
+        if (auto* instr = storeChi->getStoreInst()->getInst()) {
+            values.push_back(const_cast<llvm::Instruction*>(instr));
+        }
+        if (auto* block = storeChi->getBasicBlock()) {
+            blocks.push_back(const_cast<llvm::BasicBlock*>(block));
+        }
     } else if (def->getType() == MSSADEF::EntryMSSACHI) {
     } else if (def->getType() == MSSADEF::SSAPHI) {
         auto* phi = llvm::dyn_cast<MemSSA::PHI>(def);
@@ -153,31 +157,51 @@ void getValuesAndBlocks(SVFGNode* svfgNode,
 {
     std::unordered_set<MSSADEF*> processed_defs;
     if (auto* stmtNode = llvm::dyn_cast<StmtSVFGNode>(svfgNode)) {
-        values.push_back(const_cast<llvm::Instruction*>(stmtNode->getInst()));
-        blocks.push_back(const_cast<llvm::BasicBlock*>(svfgNode->getBB()));
+        if (auto* instr = stmtNode->getInst()) {
+            values.push_back(const_cast<llvm::Instruction*>(instr));
+        }
+        if (auto* block = svfgNode->getBB()) {
+            blocks.push_back(const_cast<llvm::BasicBlock*>(block));
+        }
     } else if (auto* actualParam = llvm::dyn_cast<ActualParmSVFGNode>(svfgNode)) {
         auto* param = actualParam->getParam();
         if (param->hasValue()) {
-            values.push_back(const_cast<llvm::Value*>(param->getValue()));
-            blocks.push_back(const_cast<llvm::BasicBlock*>(svfgNode->getBB()));
+            if (auto* instr = param->getValue()) {
+                values.push_back(const_cast<llvm::Value*>(instr));
+            }
+            if (auto* block = svfgNode->getBB()) {
+                blocks.push_back(const_cast<llvm::BasicBlock*>(block));
+            }
         }
     } else if (auto* actualRet = llvm::dyn_cast<ActualRetSVFGNode>(svfgNode)) {
         auto* ret = actualRet->getRev();
         if (ret->hasValue()) {
-            values.push_back(const_cast<llvm::Value*>(ret->getValue()));
-            blocks.push_back(const_cast<llvm::BasicBlock*>(svfgNode->getBB()));
+            if (auto* instr = ret->getValue()) {
+                values.push_back(const_cast<llvm::Value*>(instr));
+            }
+            if (auto* block = svfgNode->getBB()) {
+                blocks.push_back(const_cast<llvm::BasicBlock*>(block));
+            }
         }
     } else if (auto* formalParam = llvm::dyn_cast<FormalParmSVFGNode>(svfgNode)) {
         auto* param = formalParam->getParam();
         if (param->hasValue()) {
-            values.push_back(const_cast<llvm::Value*>(param->getValue()));
-            blocks.push_back(const_cast<llvm::BasicBlock*>(svfgNode->getBB()));
+            if (auto* instr = param->getValue()) {
+                values.push_back(const_cast<llvm::Value*>(instr));
+            }
+            if (auto* block = svfgNode->getBB()) {
+                blocks.push_back(const_cast<llvm::BasicBlock*>(block));
+            }
         }
     } else  if (auto* formalRet = llvm::dyn_cast<FormalRetSVFGNode>(svfgNode)) {
         auto* ret = formalRet->getRet();
         if (ret->hasValue()) {
-            values.push_back(const_cast<llvm::Value*>(ret->getValue()));
-            blocks.push_back(const_cast<llvm::BasicBlock*>(svfgNode->getBB()));
+            if (auto* instr = ret->getValue()) {
+                values.push_back(const_cast<llvm::Value*>(instr));
+            }
+            if (auto* block = svfgNode->getBB()) {
+                blocks.push_back(const_cast<llvm::BasicBlock*>(block));
+            }
         }
     } else if (auto* formalInNode = llvm::dyn_cast<FormalINSVFGNode>(svfgNode)) {
         getValuesAndBlocks(formalInNode->getEntryChi()->getOpVer()->getDef(), processed_defs, values, blocks);
@@ -288,6 +312,9 @@ DefUseResults::DefSite SVFGDefUseAnalysisResults::getPdgDefNode(const std::unord
         getValuesAndBlocks(svfgDefNode, values, blocks);
     }
     assert(values.size() == blocks.size());
+    if (values.empty()) {
+        return DefSite(defValue, defNode);
+    }
     if (values.size() == 1) {
         defNode = getNode(*svfgDefNodes.begin());
         defValue = values[0];

@@ -429,8 +429,12 @@ void PDGBuilder::connectToDefSite(llvm::Value* value, PDGNodeTy valueNode)
                 addPhiNodeConnections(sourceNode);
             }
         }
-    } else {
+    } else if (defInst) {
         sourceNode = m_currentFPDG->getNode(defInst);
+    } else {
+        // Ideally this should not happen
+        llvm::dbgs() << "No definition found for value " << *value << "\n";
+        return;
     }
     if (sourceNode) {
         addDataEdge(sourceNode, valueNode);
