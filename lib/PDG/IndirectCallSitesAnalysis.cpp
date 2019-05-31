@@ -331,7 +331,7 @@ bool IndirectCallSitesAnalysis::runOnModule(llvm::Module& M)
     return false;
 }
 
-static llvm::RegisterPass<IndirectCallSitesAnalysis> X("indirect-calls","runs indirect and virtual calls analysis");
+static llvm::RegisterPass<IndirectCallSitesAnalysis> X("pdg-indirect-calls","runs indirect and virtual calls analysis");
 
 }
 

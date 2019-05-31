@@ -17,7 +17,6 @@
 
 #include "PDG/SVFGDefUseAnalysisResults.h"
 #include "PDG/LLVMMemorySSADefUseAnalysisResults.h"
-#include "PDG/DGDefUseAnalysisResults.h"
 #include "PDG/LLVMDominanceTree.h"
 #include "PDG/PDGBuilder.h"
 #include "PDG/PDGGraphTraits.h"
@@ -80,6 +79,7 @@ bool SVFGPDGBuilder::runOnModule(llvm::Module& M)
     return false;
 }
 
+/*
 char DGPDGBuilder::ID = 0;
 static llvm::RegisterPass<DGPDGBuilder> Y("dg-pdg","build pdg using dg");
 
@@ -123,6 +123,7 @@ bool DGPDGBuilder::runOnModule(llvm::Module& M)
     m_pdg = pdgBuilder.getPDG();
     return false;
 }
+*/
 
 char LLVMPDGBuilder::ID = 0;
 static llvm::RegisterPass<LLVMPDGBuilder> Z("llvm-pdg","build pdg using dg");

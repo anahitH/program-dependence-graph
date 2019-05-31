@@ -33,6 +33,7 @@ private:
     PDGType m_pdg;
 };
 
+/*
 /// LLVM pass to build PDG from DG
 class DGPDGBuilder : public llvm::ModulePass
 {
@@ -57,6 +58,7 @@ public:
 private:
     PDGType m_pdg;
 };
+*/
 
 /// LLVM pass to build PDG from DG
 class LLVMPDGBuilder : public llvm::ModulePass

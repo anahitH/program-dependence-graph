@@ -12,9 +12,9 @@ include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/PDG)
 add_definitions(${LLVM_DEFINITIONS})
 
-set (DG_INCLUDE_DIR "/usr/local/include/dg")
-add_definitions(-DHAVE_LLVM)
-add_definitions(-DENABLE_CFG)
+#set (DG_INCLUDE_DIR "/usr/local/include/dg")
+#add_definitions(-DHAVE_LLVM)
+#add_definitions(-DENABLE_CFG)
 
 add_library(pdg MODULE
         lib/PDG/PDG.cpp
@@ -25,12 +25,12 @@ add_library(pdg MODULE
         lib/PDG/SVFGDefUseAnalysisResults.cpp
         lib/PDG/IndirectCallSitesAnalysis.cpp
         lib/PDG/SVFGIndirectCallSiteResults.cpp
-        lib/PDG/DGDefUseAnalysisResults.cpp
+#        lib/PDG/DGDefUseAnalysisResults.cpp
         lib/Passes/PDGBuildPasses.cpp
         lib/Debug/PDGPrinter.cpp
         lib/Debug/CallSiteConnections.cpp
         lib/Debug/SVFGTraversal.cpp
-        lib/Debug/DGReachingDefinitions.cpp
+#        lib/Debug/DGReachingDefinitions.cpp
 )
 
 target_include_directories(pdg PUBLIC
