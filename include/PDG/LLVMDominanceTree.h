@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PDG/DominanceResults.h"
+#include "PDG/PDG/DominanceResults.h"
 #include <functional>
 
 namespace llvm {

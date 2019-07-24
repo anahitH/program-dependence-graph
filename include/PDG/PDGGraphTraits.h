@@ -1,9 +1,9 @@
 #pragma once
 
-#include "PDG/PDGEdge.h"
-#include "PDG/PDGNode.h"
-#include "PDG/PDGLLVMNode.h"
-#include "PDG/FunctionPDG.h"
+#include "PDG/PDG/PDGEdge.h"
+#include "PDG/PDG/PDGNode.h"
+#include "PDG/PDG/PDGLLVMNode.h"
+#include "PDG/PDG/FunctionPDG.h"
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Support/DOTGraphTraits.h"	// for dot graph traits

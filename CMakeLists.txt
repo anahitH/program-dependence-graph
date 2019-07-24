@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(PDG VERSION 0.1.0 LANGUAGES CXX)
 
-find_package(LLVM 7.0 REQUIRED CONFIG)
+find_package(LLVM 6.0 REQUIRED CONFIG)
 find_package(svf REQUIRED COMPONENTS Svf)
 
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
