@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PDG/PDG/IndirectCallSiteResults.h"
+#include "PDG/IndirectCallSiteResults.h"
 
 class PTACallGraph;
 

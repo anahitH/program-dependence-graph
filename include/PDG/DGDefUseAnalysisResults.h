@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PDG/PDG/DefUseResults.h"
+#include "PDG/DefUseResults.h"
 
 #include "dg/llvm/analysis/PointsTo/PointerAnalysis.h"
 #include "dg/llvm/analysis/ReachingDefinitions/ReachingDefinitions.h"
