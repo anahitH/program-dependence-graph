@@ -225,18 +225,18 @@ void PDGBuilder::visitCallInst(llvm::CallInst& I)
     // TODO: think about external calls
     //llvm::dbgs() << "Call Inst: " << I << "\n";
     llvm::CallSite callSite(&I);
-    visitCallSite(callSite);
+    selfVisitCallSite(callSite);
 }
 
 void PDGBuilder::visitInvokeInst(llvm::InvokeInst& I)
 {
     //llvm::dbgs() << "Invoke Inst: " << I << "\n";
     llvm::CallSite callSite(&I);
-    visitCallSite(callSite);
+    selfVisitCallSite(callSite);
     visitTerminatorInst(I);
 }
 
-void PDGBuilder::visitTerminatorInst(llvm::TerminatorInst& I)
+void PDGBuilder::visitTerminatorInst(llvm::Instruction& I)
 {
     auto sourceNode = getInstructionNodeFor(&I);
     for (unsigned i = 0; i < I.getNumSuccessors(); ++i) {
@@ -302,7 +302,7 @@ PDGBuilder::PDGNodeTy PDGBuilder::createConstantNodeFor(llvm::Constant* constant
     return std::make_shared<PDGLLVMConstantNode>(constant);
 }
 
-void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
+void PDGBuilder::selfVisitCallSite(llvm::CallSite& callSite)
 {
     auto destNode = getInstructionNodeFor(callSite.getInstruction());
     FunctionSet callees;

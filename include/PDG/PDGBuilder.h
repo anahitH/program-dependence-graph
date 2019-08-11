@@ -74,7 +74,7 @@ public:
     void visitMemIntrinsic(llvm::MemIntrinsic &I);
     void visitCallInst(llvm::CallInst& I);
     void visitInvokeInst(llvm::InvokeInst& I);
-    void visitTerminatorInst(llvm::TerminatorInst& I);
+    void visitTerminatorInst(llvm::Instruction& I);
     void visitReturnInst(llvm::ReturnInst& I);
 
     // all instructions not handled individually will get here
@@ -99,7 +99,7 @@ private:
     PDGNodeTy getNodeFor(llvm::Value* value);
     PDGNodeTy getNodeFor(llvm::BasicBlock* block);
     void addControlEdgesForBlock(llvm::BasicBlock& B);
-    void visitCallSite(llvm::CallSite& callSite);
+    void selfVisitCallSite(llvm::CallSite& callSite);
     void addDataEdge(PDGNodeTy source, PDGNodeTy dest);
     void addControlEdge(PDGNodeTy source, PDGNodeTy dest);
     void connectToDefSite(llvm::Value* value, PDGNodeTy valueNode);
