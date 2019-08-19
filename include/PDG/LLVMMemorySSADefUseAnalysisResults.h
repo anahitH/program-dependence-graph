@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PDG/PDG/DefUseResults.h"
+#include "PDG/DefUseResults.h"
 
 #include <functional>
 #include <unordered_set>

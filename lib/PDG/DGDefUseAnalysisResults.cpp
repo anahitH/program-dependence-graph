@@ -1,5 +1,5 @@
-#include "PDG/DGDefUseAnalysisResults.h"
-#include "PDG/PDGLLVMNode.h"
+#include "DGDefUseAnalysisResults.h"
+#include "PDGLLVMNode.h"
 
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"

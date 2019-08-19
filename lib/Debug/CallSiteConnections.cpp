@@ -15,11 +15,10 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
-#include "PDG/PDG/PDG.h"
-#include "PDG/PDG/FunctionPDG.h"
+#include "PDG/PDG.h"
+#include "PDG/FunctionPDG.h"
 #include "PDG/SVFGDefUseAnalysisResults.h"
 #include "PDG/LLVMMemorySSADefUseAnalysisResults.h"
-#include "PDG/DGDefUseAnalysisResults.h"
 #include "PDG/LLVMDominanceTree.h"
 #include "PDG/PDGBuilder.h"
 #include "PDG/PDGGraphTraits.h"
@@ -98,10 +97,7 @@ public:
         using IndCSResultsTy = PDGBuilder::IndCSResultsTy;
         using DominanceResultsTy = PDGBuilder::DominanceResultsTy;
         DefUseResultsTy defUse;
-        if (def_use == "dg") {
-            llvm::dbgs() << "Using dg for def-use information\n";
-            defUse = DefUseResultsTy(new DGDefUseAnalysisResults(&M));
-        } else if (def_use == "llvm") {
+	if (def_use == "llvm") {
             llvm::dbgs() << "Using llvm for def-use information\n";
             defUse = DefUseResultsTy(new LLVMMemorySSADefUseAnalysisResults(memSSAGetter, aliasAnalysisResGetter));
         } else {
