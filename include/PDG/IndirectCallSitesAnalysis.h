@@ -47,6 +47,7 @@ public:
     IndirectCallSitesAnalysis();
 
 public:
+    void getAnalysisUsage(llvm::AnalysisUsage& AU) const override;
     bool runOnModule(llvm::Module& M) override;
 
 public:

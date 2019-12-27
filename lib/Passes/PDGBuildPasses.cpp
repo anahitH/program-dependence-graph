@@ -79,52 +79,6 @@ bool SVFGPDGBuilder::runOnModule(llvm::Module& M)
     return false;
 }
 
-/*
-char DGPDGBuilder::ID = 0;
-static llvm::RegisterPass<DGPDGBuilder> Y("dg-pdg","build pdg using dg");
-
-void DGPDGBuilder::getAnalysisUsage(llvm::AnalysisUsage& AU) const
-{
-    AU.addRequired<llvm::PostDominatorTreeWrapperPass>();
-    AU.addRequired<llvm::DominatorTreeWrapperPass>();
-    AU.setPreservesAll();
-}
-
-bool DGPDGBuilder::runOnModule(llvm::Module& M)
-{
-    auto domTreeGetter = [&] (llvm::Function* F) {
-        return &this->getAnalysis<llvm::DominatorTreeWrapperPass>(*F).getDomTree();
-    };
-    auto postdomTreeGetter = [&] (llvm::Function* F) {
-        return &this->getAnalysis<llvm::PostDominatorTreeWrapperPass>(*F).getPostDomTree();
-    };
-
-    // TODO: consider not using SVF here at all
-    SVFModule svfM(M);
-    AndersenWaveDiff* ander = new svfg::PDGAndersenWaveDiff();
-    ander->disablePrintStat();
-    ander->analyze(svfM);
-
-    using DefUseResultsTy = PDGBuilder::DefUseResultsTy;
-    using IndCSResultsTy = PDGBuilder::IndCSResultsTy;
-    using DominanceResultsTy = PDGBuilder::DominanceResultsTy;
-    DefUseResultsTy defUse = DefUseResultsTy(new pdg::DGDefUseAnalysisResults(&M));
-    IndCSResultsTy indCSRes = IndCSResultsTy(new
-            pdg::SVFGIndirectCallSiteResults(ander->getPTACallGraph()));
-    DominanceResultsTy domResults = DominanceResultsTy(new LLVMDominanceTree(domTreeGetter,
-                postdomTreeGetter));
-
-    pdg::PDGBuilder pdgBuilder(&M);
-    pdgBuilder.setDesUseResults(defUse);
-    pdgBuilder.setIndirectCallSitesResults(indCSRes);
-    pdgBuilder.setDominanceResults(domResults);
-    pdgBuilder.build();
-
-    m_pdg = pdgBuilder.getPDG();
-    return false;
-}
-*/
-
 char LLVMPDGBuilder::ID = 0;
 static llvm::RegisterPass<LLVMPDGBuilder> Z("llvm-pdg","build pdg using dg");
 

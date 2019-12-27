@@ -17,17 +17,17 @@ class PDGLLVMNode : public PDGNode
 public:
     enum NodeType : unsigned {
         InstructionNode = 0,
-        FormalArgumentNode,
-        VaArgumentNode,
-        ActualArgumentNode,
-        GlobalVariableNode,
-        ConstantExprNode,
-        ConstantNode,
-        BasicBlockNode,
-        FunctionNode,
-        NullNode,
-        PhiNode,
-        UnknownNode
+        FormalArgumentNode, // 1
+        VaArgumentNode, // 2
+        ActualArgumentNode, // 3
+        GlobalVariableNode, // 4
+        ConstantExprNode, // 5
+        ConstantNode, // 6
+        BasicBlockNode, // 7
+        FunctionNode, // 8
+        NullNode, // 9
+        PhiNode, // 10
+        UnknownNode // 11
     };
 
 public:

@@ -160,6 +160,7 @@ void PDGBuilder::visitStoreInst(llvm::StoreInst& I)
     // TODO: output this for debug mode only
     //llvm::dbgs() << "Store Inst: " << I << "\n";
     auto* valueOp = I.getValueOperand();
+    llvm::dbgs() << *valueOp << "\n";
     auto sourceNode = getNodeFor(valueOp);
     if (!sourceNode) {
         return;
@@ -225,18 +226,18 @@ void PDGBuilder::visitCallInst(llvm::CallInst& I)
     // TODO: think about external calls
     //llvm::dbgs() << "Call Inst: " << I << "\n";
     llvm::CallSite callSite(&I);
-    visitCallSite(callSite);
+    selfVisitCallSite(callSite);
 }
 
 void PDGBuilder::visitInvokeInst(llvm::InvokeInst& I)
 {
     //llvm::dbgs() << "Invoke Inst: " << I << "\n";
     llvm::CallSite callSite(&I);
-    visitCallSite(callSite);
+    selfVisitCallSite(callSite);
     visitTerminatorInst(I);
 }
 
-void PDGBuilder::visitTerminatorInst(llvm::TerminatorInst& I)
+void PDGBuilder::visitTerminatorInst(llvm::Instruction& I)
 {
     auto sourceNode = getInstructionNodeFor(&I);
     for (unsigned i = 0; i < I.getNumSuccessors(); ++i) {
@@ -302,9 +303,10 @@ PDGBuilder::PDGNodeTy PDGBuilder::createConstantNodeFor(llvm::Constant* constant
     return std::make_shared<PDGLLVMConstantNode>(constant);
 }
 
-void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
+void PDGBuilder::selfVisitCallSite(llvm::CallSite& callSite)
 {
     auto destNode = getInstructionNodeFor(callSite.getInstruction());
+    bool isIndirectCall = false;
     FunctionSet callees;
     if (!m_indCSResults->hasIndCSCallees(callSite)) {
         if (auto* calledF = callSite.getCalledFunction()) {
@@ -312,10 +314,15 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
         }
     } else {
         callees = m_indCSResults->getIndCSCallees(callSite);
+        isIndirectCall = true;
     }
     for (auto callee : callees) {
         if (!m_pdg->hasFunctionNode(callee)) {
             m_pdg->addFunctionNode(callee);
+        }
+        if (isIndirectCall) {
+            auto calleeValueNode = getNodeFor(callSite.getCalledValue());
+            addDataEdge(calleeValueNode, destNode);
         }
         auto calleeNode = m_pdg->getFunctionNode(callee);
         if (!callSite.getFunctionType()->isVoidTy()) {
@@ -354,6 +361,9 @@ void PDGBuilder::visitCallSite(llvm::CallSite& callSite)
 
 void PDGBuilder::addDataEdge(PDGNodeTy source, PDGNodeTy dest)
 {
+    if (!source || !dest) {
+        return;
+    }
     PDGNode::PDGEdgeType edge = PDGNode::PDGEdgeType(new PDGDataEdge(source, dest));
     source->addOutEdge(edge);
     dest->addInEdge(edge);
@@ -396,6 +406,11 @@ PDGBuilder::PDGNodeTy PDGBuilder::getNodeFor(llvm::Value* value)
     }
     if (auto* nullValue = llvm::dyn_cast<llvm::ConstantPointerNull>(value)) {
         m_currentFPDG->addNode(value, createNullNode());
+    } else if (auto* function = llvm::dyn_cast<llvm::Function>(value)) {
+        if (!m_pdg->hasFunctionNode(function)) {
+            m_pdg->addFunctionNode(function);
+        }
+        return m_pdg->getFunctionNode(function);
     } else if (auto* constant = llvm::dyn_cast<llvm::Constant>(value)) {
         m_currentFPDG->addNode(value, createConstantNodeFor(constant));
     } else if (auto* instr = llvm::dyn_cast<llvm::Instruction>(value)) {

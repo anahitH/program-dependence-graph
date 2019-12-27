@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(PDG VERSION 0.1.0 LANGUAGES CXX)
 
-find_package(LLVM 6.0 REQUIRED CONFIG)
+find_package(LLVM REQUIRED CONFIG)
 find_package(svf REQUIRED COMPONENTS Svf)
 
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
@@ -12,10 +12,6 @@ include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/PDG)
 add_definitions(${LLVM_DEFINITIONS})
 
-#set (DG_INCLUDE_DIR "/usr/local/include/dg")
-#add_definitions(-DHAVE_LLVM)
-#add_definitions(-DENABLE_CFG)
-
 add_library(pdg MODULE
         lib/PDG/PDG.cpp
         lib/PDG/PDGBuilder.cpp
@@ -25,12 +21,10 @@ add_library(pdg MODULE
         lib/PDG/SVFGDefUseAnalysisResults.cpp
         lib/PDG/IndirectCallSitesAnalysis.cpp
         lib/PDG/SVFGIndirectCallSiteResults.cpp
-#        lib/PDG/DGDefUseAnalysisResults.cpp
         lib/Passes/PDGBuildPasses.cpp
         lib/Debug/PDGPrinter.cpp
         lib/Debug/CallSiteConnections.cpp
         lib/Debug/SVFGTraversal.cpp
-#        lib/Debug/DGReachingDefinitions.cpp
 )
 
 target_include_directories(pdg PUBLIC
