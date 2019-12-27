@@ -361,6 +361,9 @@ void PDGBuilder::selfVisitCallSite(llvm::CallSite& callSite)
 
 void PDGBuilder::addDataEdge(PDGNodeTy source, PDGNodeTy dest)
 {
+    if (!source || !dest) {
+        return;
+    }
     PDGNode::PDGEdgeType edge = PDGNode::PDGEdgeType(new PDGDataEdge(source, dest));
     source->addOutEdge(edge);
     dest->addInEdge(edge);
