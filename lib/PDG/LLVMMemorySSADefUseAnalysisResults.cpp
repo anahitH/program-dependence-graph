@@ -99,11 +99,10 @@ LLVMMemorySSADefUseAnalysisResults::getDefSites(llvm::Value* value,
         llvm::ModRefInfo modRef;
         if (auto* load = llvm::dyn_cast<llvm::LoadInst>(value)) {
             modRef = aa->getModRefInfo(def->getMemoryInst(),
-                                       load->getPointerOperand(),
-                                        DL.getTypeStoreSize(load->getType()));
-        } else if (value->getType()->isSized()) {
-            modRef = aa->getModRefInfo(def->getMemoryInst(), value,
-                                       DL.getTypeStoreSize(value->getType()));
+				       llvm::MemoryLocation::get(load));
+        } else if (value->getType()->isSized() && llvm::dyn_cast<llvm::Instruction>(value)) {
+		modRef = aa->getModRefInfo(def->getMemoryInst(),
+				       llvm::MemoryLocation::get(def->getMemoryInst()));
         } else {
             return phi;
         }

@@ -8,6 +8,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/IR/Dominators.h"
 
 #include "llvm/Analysis/TypeMetadataUtils.h"
 #include "llvm/Transforms/IPO/WholeProgramDevirt.h"
@@ -100,10 +101,10 @@ public:
     VirtualsImpl(IndCSAnalysisResTy results);
 
 public:
-    void runOnModule(llvm::Module& M);
+    void runOnModule(llvm::Module& M, const std::function<llvm::DominatorTree* (llvm::Function*)>& domTreeGetter);
 
 private:
-    void collectTypeTestUsers(llvm::Function* F);
+    void collectTypeTestUsers(llvm::Function* F, llvm::DominatorTree* domTree);
     void buildTypeIdentifierMap(std::vector<llvm::wholeprogramdevirt::VTableBits> &Bits,
                                 std::unordered_map<llvm::Metadata*, std::set<llvm::wholeprogramdevirt::TypeMemberInfo>> &TypeIdMap);
     bool tryFindVirtualCallTargets(std::vector<llvm::wholeprogramdevirt::VirtualCallTarget>& TargetsForSlot,
@@ -123,7 +124,7 @@ IndirectCallSitesAnalysis::VirtualsImpl::VirtualsImpl(IndCSAnalysisResTy results
 {
 }
 
-void IndirectCallSitesAnalysis::VirtualsImpl::runOnModule(llvm::Module& M)
+void IndirectCallSitesAnalysis::VirtualsImpl::runOnModule(llvm::Module& M, const std::function<llvm::DominatorTree* (llvm::Function*)>& domTreeGetter)
 {
     m_module = &M;
 
@@ -137,7 +138,7 @@ void IndirectCallSitesAnalysis::VirtualsImpl::runOnModule(llvm::Module& M)
         return;
 
     if (TypeTestFunc && AssumeFunc) {
-        collectTypeTestUsers(TypeTestFunc);
+        collectTypeTestUsers(TypeTestFunc, domTreeGetter(TypeTestFunc));
     }
 
     std::vector<llvm::wholeprogramdevirt::VTableBits> Bits;
@@ -159,7 +160,7 @@ void IndirectCallSitesAnalysis::VirtualsImpl::runOnModule(llvm::Module& M)
     m_callSlots.clear();
 }
 
-void IndirectCallSitesAnalysis::VirtualsImpl::collectTypeTestUsers(llvm::Function* F)
+void IndirectCallSitesAnalysis::VirtualsImpl::collectTypeTestUsers(llvm::Function* F, llvm::DominatorTree* domTree)
 {
     auto I = F->use_begin();
     while (I != F->use_end()) {
@@ -170,7 +171,7 @@ void IndirectCallSitesAnalysis::VirtualsImpl::collectTypeTestUsers(llvm::Functio
         }
         llvm::SmallVector<llvm::DevirtCallSite, 1> DevirtCalls;
         llvm::SmallVector<llvm::CallInst *, 1> Assumes;
-        llvm::findDevirtualizableCallsForTypeTest(DevirtCalls, Assumes, CI);
+        llvm::findDevirtualizableCallsForTypeTest(DevirtCalls, Assumes, CI, *domTree);
 
         if (Assumes.empty()) {
             return;
@@ -324,9 +325,16 @@ IndirectCallSitesAnalysis::IndirectCallSitesAnalysis()
 {
 }
 
+void IndirectCallSitesAnalysis::getAnalysisUsage(llvm::AnalysisUsage& AU) const
+{
+    AU.addRequired<llvm::DominatorTreeWrapperPass>();
+    AU.setPreservesAll();
+}
+
 bool IndirectCallSitesAnalysis::runOnModule(llvm::Module& M)
 {
-    m_vimpl->runOnModule(M);
+    auto domTreeGetter = [this] (llvm::Function* F) {return &this->getAnalysis<llvm::DominatorTreeWrapperPass>(*F).getDomTree(); };
+    m_vimpl->runOnModule(M, domTreeGetter);
     m_iimpl->runOnModule(M);
     return false;
 }
